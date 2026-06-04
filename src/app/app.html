@@ -1,0 +1,667 @@
+<div class="min-h-screen bg-slate-900 text-slate-100 font-sans flex flex-col selection:bg-indigo-500/30 selection:text-white" id="main-app-container">
+  
+  <!-- Header Bar -->
+  <header class="border-b border-white/5 bg-slate-950/80 backdrop-blur sticky top-0 z-40 px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-emerald-400 p-0.5 flex items-center justify-center shadow-lg">
+        <div class="h-full w-full bg-slate-900 rounded-[10px] flex items-center justify-center">
+          <mat-icon class="text-indigo-400 text-lg">chrome_reader_mode</mat-icon>
+        </div>
+      </div>
+      <div>
+        <h1 class="text-lg font-bold tracking-tight font-display bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">PDF-2-EPUB</h1>
+      </div>
+    </div>
+
+    <!-- Status Badge -->
+    <div class="flex items-center gap-2 text-xs">
+      @if (isScriptLoaded()) {
+        <button 
+          type="button"
+          (click)="openApiKeyModal()"
+          class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-full font-medium transition-colors cursor-pointer focus:outline-none">
+          <span class="h-1.5 w-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
+          {{ clientApiKey() ? 'Đang dùng Key của bạn' : 'Nhập API Key' }}
+        </button>
+      } @else {
+        <span class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full font-medium">
+          <span class="h-1.5 w-1.5 bg-amber-400 rounded-full animate-bounce"></span>
+          Đang khởi tạo thư viện...
+        </span>
+      }
+    </div>
+  </header>
+
+  <!-- Toast notifications -->
+  <div class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 items-end pointer-events-none">
+    @if (apiError()) {
+      <div class="pointer-events-auto bg-slate-900 border border-rose-500/30 text-rose-300 px-4 py-3 rounded-xl shadow-2xl flex items-center justify-between gap-4 animate-fade-in max-w-sm">
+        <div class="flex items-center gap-2">
+          <mat-icon class="text-rose-400">error_outline</mat-icon>
+          <span class="font-sans text-sm">{{ apiError() }}</span>
+        </div>
+        <button (click)="apiError.set('')" class="text-rose-300 hover:text-white shrink-0 outline-none">
+          <mat-icon class="text-sm">close</mat-icon>
+        </button>
+      </div>
+    }
+
+    @if (successMessage()) {
+      <div class="pointer-events-auto bg-slate-900 border border-emerald-500/30 text-emerald-300 px-4 py-3 rounded-xl shadow-2xl flex items-center justify-between gap-4 animate-fade-in max-w-sm">
+        <div class="flex items-center gap-2">
+          <mat-icon class="text-emerald-400">check_circle_outline</mat-icon>
+          <span class="font-sans text-sm">{{ successMessage() }}</span>
+        </div>
+        <button (click)="showSuccess('')" class="text-emerald-300 hover:text-white shrink-0 outline-none">
+          <mat-icon class="text-sm">close</mat-icon>
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Main Body -->
+  <main class="flex-1 flex flex-col md:flex-row min-h-0">
+    
+    <!-- Empty Upload State -->
+    @if (pdfPages().length === 0) {
+      <div class="flex-1 max-w-4xl mx-auto flex flex-col items-center justify-center px-6 py-12 text-center" id="empty-state">
+        
+        <!-- Drag or Select Card -->
+        <div 
+          role="button"
+          tabindex="0"
+          (dragover)="onDragOver($event)"
+          (drop)="onFileDropped($event)"
+          (click)="fileInput.click()"
+          (keydown.enter)="fileInput.click()"
+          class="w-full max-w-lg bg-slate-950 border-2 border-dashed border-white/10 hover:border-indigo-500/50 rounded-3xl p-10 md:p-14 transition-all duration-300 shadow-2xl flex flex-col items-center group cursor-pointer">
+          
+          <input 
+            #fileInput 
+            type="file" 
+            accept="application/pdf" 
+            (change)="onFileSelected($event)" 
+            class="hidden" />
+
+          <div class="h-20 w-20 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 group-hover:scale-105 group-hover:bg-indigo-500/20 transition-all duration-300 mb-6 border border-indigo-500/10">
+            @if (isParsing()) {
+              <mat-icon class="text-3xl animate-spin">sync</mat-icon>
+            } @else {
+              <mat-icon class="text-3xl">cloud_upload</mat-icon>
+            }
+          </div>
+
+          <h2 class="text-xl font-bold tracking-tight mb-2 font-sans text-slate-100">
+            @if (isParsing()) {
+              Đang phân tích cú pháp dữ liệu...
+            } @else {
+              Kéo thả tệp PDF vào đây
+            }
+          </h2>
+          <p class="text-sm text-slate-400 mb-6 max-w-sm font-sans">
+            @if (isParsing()) {
+              {{ parsingStatus() || 'Hệ thống đang cấu trúc thông tin' }}
+            } @else {
+              Hoặc bấm vào để duyệt tệp tin từ máy vi tính. Ứng dụng sẽ tự động tách rời hình ảnh, tải lên IndexedDB và lưu trữ an toàn.
+            }
+          </p>
+
+          @if (!isParsing()) {
+            <span class="px-5 py-2.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 rounded-xl transition shadow-lg shadow-indigo-600/10 font-sans text-white">
+              Chọn tệp tin PDF
+            </span>
+          } @else {
+            <div class="w-full bg-slate-900 rounded-full h-1.5 max-w-xs mt-4 overflow-hidden border border-white/5">
+              <div class="bg-indigo-500 h-1.5 rounded-full animate-pulse-width" style="width: 75%"></div>
+            </div>
+          }
+        </div>
+
+      </div>
+    }
+
+    <!-- Active Workspace -->
+    @if (pdfPages().length > 0) {
+      <div class="flex-1 flex flex-col md:flex-row min-h-0 w-full" id="workspace">
+        
+        <!-- Left Panel: Configurations & Details -->
+        <aside class="w-full md:w-80 border-r border-white/5 bg-slate-950/50 p-5 flex flex-col justify-between overflow-y-auto shrink-0 space-y-6">
+          <div class="space-y-6">
+
+            <!-- File Info Card -->
+            <div class="bg-slate-900/60 border border-white/5 rounded-2xl p-4 relative overflow-hidden group">
+              <div class="absolute top-0 right-0 p-3 text-slate-700">
+                <mat-icon class="text-3xl">picture_as_pdf</mat-icon>
+              </div>
+              <span class="text-[10px] font-mono tracking-widest text-indigo-400 uppercase font-semibold block mb-1">Tài liệu đã nạp</span>
+              <h3 class="text-sm font-bold text-slate-200 truncate pr-6 font-display" title="{{ fileName() }}">{{ fileName() }}</h3>
+              
+              <div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-white/5 text-center">
+                <div class="bg-slate-950/50 rounded-xl p-2.5">
+                  <span class="block text-[10px] text-slate-400 uppercase font-sans">Trang</span>
+                  <span class="text-sm font-bold text-slate-200 font-mono">{{ totalPageCount() }}</span>
+                </div>
+                <div class="bg-slate-950/50 rounded-xl p-2.5">
+                  <span class="block text-[10px] text-slate-400 uppercase font-sans">Ảnh bóc được</span>
+                  <span class="text-sm font-bold text-slate-200 text-indigo-400 font-mono">{{ extractedImagesCount() }}</span>
+                </div>
+              </div>
+
+              <!-- Reset current PDF -->
+              <button 
+                (click)="pdfPages.set([]); clientReflowHtml.set(''); aiReflowHtml.set(''); clientMarkdown.set(''); aiMarkdown.set('');"
+                class="w-full mt-4 flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-white/5 hover:bg-rose-500/10 text-slate-300 hover:text-rose-300 rounded-xl transition border border-white/5 font-sans">
+                <mat-icon class="text-sm">restart_alt</mat-icon>
+                Đổi tài liệu khác
+              </button>
+            </div>
+
+            <!-- Configurations Accordion/Card -->
+            <div class="bg-slate-900/40 border border-white/5 rounded-2xl p-4 space-y-4">
+              <div class="flex items-center gap-2 text-xs font-semibold text-slate-300 uppercase tracking-wider font-sans">
+                <mat-icon class="text-slate-400 text-sm">settings_suggest</mat-icon>
+                Cấu hình tối ưu AI
+              </div>
+
+              <!-- Guide explaining default behavior -->
+              <div class="space-y-1.5 p-3 bg-slate-950/40 rounded-xl border border-white/5 font-sans">
+                <span class="text-[11px] text-indigo-400 uppercase block font-semibold">Cơ chế tự động của AI</span>
+                <p class="text-[10px] text-slate-400 leading-relaxed font-sans">
+                  AI sẽ tự động lắp ghép tất cả hình ảnh rời rạc vào chính xác ngữ cảnh phù hợp, sửa các lỗi xuống dòng thô và giữ nguyên vẹn ngôn ngữ gốc của cuốn sách của bạn đảm bảo tiêu chuẩn EPUB 3 cao nhất.
+                </p>
+              </div>
+
+              <!-- Special manual input prompt suggestion -->
+              <div class="space-y-1 font-sans">
+                <span class="text-[11px] text-slate-400 block font-semibold">Yêu cầu đặc biệt bổ sung</span>
+                <textarea 
+                  [value]="customPrompt()"
+                  (input)="customPrompt.set($any($event.target).value)"
+                  placeholder="Ví dụ: Định dạng lại đề mục lục rõ nét hơn, giữ nguyên các thuật ngữ tiếng Anh gốc..."
+                  class="w-full bg-slate-950 border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-indigo-500 transition h-20 resize-none"></textarea>
+              </div>
+
+              <!-- Large triggering action button for Optimization -->
+              <button 
+                (click)="optimizeWithAI()"
+                [disabled]="isOptimizing() || isParsing()"
+                class="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 disabled:from-slate-700 disabled:to-slate-800 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-600/10 hover:shadow-indigo-500/20 transition-all duration-300 flex items-center justify-center gap-2 font-sans">
+                @if (isOptimizing()) {
+                  <mat-icon class="text-sm animate-spin">sync</mat-icon>
+                  Đang tối ưu & ráp nối ảnh...
+                } @else {
+                  <mat-icon class="text-sm">auto_awesome</mat-icon>
+                  Ráp nội dung & Ảnh bằng AI ✨
+                }
+              </button>
+
+            </div>
+
+          </div>
+
+          <!-- Bottom: Action bar for exports -->
+          <div class="pt-4 border-t border-white/5 space-y-3 font-sans">
+            <div class="text-[10px] text-slate-500 font-mono tracking-widest uppercase block mb-1">Xuất bản sách & tài liệu</div>
+            
+            <button 
+              (click)="downloadEpubFile()"
+              [disabled]="isParsing() || isOptimizing()"
+              class="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition shadow shadow-emerald-500/10 cursor-pointer">
+              <mat-icon class="text-sm">book</mat-icon>
+              XUẤT FILE SÁCH EPUB (.epub)
+            </button>
+
+            <div class="grid grid-cols-2 gap-2">
+              <button 
+                (click)="downloadMarkdownFile()"
+                class="py-2.5 px-2 bg-slate-900 hover:bg-slate-850 text-slate-200 text-xs font-semibold rounded-xl border border-white/5 flex items-center justify-center gap-1 transition">
+                <mat-icon class="text-[14px]">download</mat-icon>
+                Lưu .md
+              </button>
+              <button 
+                (click)="downloadHtmlFile()"
+                class="py-2.5 px-2 bg-slate-900 hover:bg-slate-850 text-slate-200 text-xs font-semibold rounded-xl border border-white/5 flex items-center justify-center gap-1 transition">
+                <mat-icon class="text-[14px]">html</mat-icon>
+                Lưu .html
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Right Panel: Tabs, Workspace Preview and Live Editor -->
+        <div class="flex-1 flex flex-col min-h-0 bg-slate-950">
+          
+          <!-- Top Tab Switch Layout -->
+          <div class="border-b border-white/5 bg-slate-950 px-6 py-2 flex items-center justify-between shrink-0">
+            <div class="flex gap-2">
+              <button 
+                (click)="selectedTab.set('reflow')"
+                class="px-4 py-2.5 text-xs font-semibold rounded-xl transition flex items-center gap-1.5 font-sans"
+                [ngClass]="selectedTab() === 'reflow' ? 'bg-white/10 text-white font-bold' : 'text-slate-400 hover:text-slate-200'">
+                <mat-icon class="text-xs">chrome_reader_mode</mat-icon>
+                Xem trước sách (Reflowed)
+              </button>
+              <button 
+                (click)="selectedTab.set('markdown')"
+                class="px-4 py-2.5 text-xs font-semibold rounded-xl transition flex items-center gap-1.5 font-sans"
+                [ngClass]="selectedTab() === 'markdown' ? 'bg-white/10 text-white font-bold' : 'text-slate-400 hover:text-slate-200'">
+                <mat-icon class="text-xs">text_snippet</mat-icon>
+                Mã Markdown (.md)
+              </button>
+              <button 
+                (click)="selectedTab.set('pdf')"
+                class="px-4 py-2.5 text-xs font-semibold rounded-xl transition flex items-center gap-1.5 font-sans"
+                [ngClass]="selectedTab() === 'pdf' ? 'bg-white/10 text-white font-bold' : 'text-slate-400 hover:text-slate-200'">
+                <mat-icon class="text-xs">collections</mat-icon>
+                Ảnh & Bản Gốc (PDF)
+              </button>
+              <button 
+                (click)="selectedTab.set('source')"
+                class="px-4 py-2.5 text-xs font-semibold rounded-xl transition flex items-center gap-1.5 font-sans"
+                [ngClass]="selectedTab() === 'source' ? 'bg-white/10 text-white font-bold' : 'text-slate-400 hover:text-slate-200'">
+                <mat-icon class="text-xs">code</mat-icon>
+                Mã HTML
+              </button>
+            </div>
+
+            <!-- Tab settings context variables (Themes / Styles) -->
+            @if (selectedTab() === 'reflow') {
+              <div class="flex items-center gap-4 text-xs font-sans">
+                
+                <!-- Toggle Mode: Client/Gemini -->
+                <div class="flex items-center gap-1 bg-slate-900 border border-white/5 rounded-xl p-1 shrink-0">
+                  <button 
+                    (click)="activeReflowMode.set('client')"
+                    class="px-3 py-1.5 rounded-lg text-[11px] font-semibold transition"
+                    [ngClass]="activeReflowMode() === 'client' ? 'bg-slate-800 text-indigo-400 font-bold' : 'text-slate-400 hover:text-slate-250'">
+                    Client-Side
+                  </button>
+                  <button 
+                    (click)="activeReflowMode.set('ai')"
+                    [disabled]="!aiMarkdown()"
+                    class="px-3 py-1.5 rounded-lg text-[11px] font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                    [ngClass]="activeReflowMode() === 'ai' ? 'bg-slate-800 text-emerald-400 font-bold' : 'text-slate-400 hover:text-slate-250'">
+                    AI Optimized ✨
+                  </button>
+                </div>
+
+
+
+              </div>
+            }
+          </div>
+
+          <!-- Preview Content Canvas Window -->
+          <div class="flex-grow overflow-y-auto p-4 md:p-8 flex justify-center">
+            
+            <!-- Reflow modern article Tab container -->
+            @if (selectedTab() === 'reflow') {
+              <div 
+                class="w-full max-w-4xl rounded-2xl shadow-lg border p-6 md:p-14 transition-all duration-300 relative"
+                [ngClass]="{
+                  'bg-white text-slate-800 border-slate-200': themeStyle() === 'clean',
+                  'bg-[#fbf6ec] text-slate-850 border-amber-100': themeStyle() === 'warm',
+                  'bg-zinc-950 text-zinc-200 border-zinc-900 font-mono': themeStyle() === 'mono'
+                }">
+                
+                @if (activeReflowMode() === 'ai' && aiReflowHtml()) {
+                  <!-- Render optimized AI output -->
+                  <div class="prose max-w-none text-justify flex flex-col" [innerHTML]="aiReflowHtml()"></div>
+                } @else {
+                  <!-- Render clean local output -->
+                  <div class="prose max-w-none text-justify flex flex-col animate-fade-in" [innerHTML]="clientReflowHtml()"></div>
+                }
+
+              </div>
+            }
+
+            <!-- Markdown Source Code Viewer -->
+            @if (selectedTab() === 'markdown') {
+              <div class="w-full max-w-4xl h-full flex flex-col bg-slate-950" id="markdown-source-preview">
+                <div class="flex justify-between items-center mb-4 shrink-0 bg-slate-900/50 p-4 border border-white/5 rounded-2xl font-sans">
+                  <div>
+                    <span class="text-xs font-bold text-slate-200">Mã nguồn sách dạng Markdown (.md)</span>
+                    <span class="block text-[10px] text-slate-400 mt-0.5">Sách lưu chứa trực tiếp tên ảnh IMG-XX cố định (chuẩn không bị dịch dịch thuật)</span>
+                  </div>
+                  <div class="flex gap-2">
+                    <button 
+                      (click)="copyMarkdownCode()" 
+                      class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
+                      <mat-icon class="text-xs">content_copy</mat-icon>
+                      Sao Chép Markdown
+                    </button>
+                    <button 
+                      (click)="downloadMarkdownFile()" 
+                      class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition border border-white/5">
+                      <mat-icon class="text-xs">download</mat-icon>
+                      Tải file .md
+                    </button>
+                  </div>
+                </div>
+                
+                <div class="flex-grow bg-slate-950 border border-white/5 rounded-2xl overflow-y-auto p-4 font-mono text-xs text-indigo-300 leading-relaxed whitespace-pre-wrap select-all">
+                  {{ activeReflowMode() === 'ai' ? aiMarkdown() : clientMarkdown() }}
+                </div>
+              </div>
+            }
+
+            <!-- Canvas View (Original exact PDF page renders) -->
+            @if (selectedTab() === 'pdf') {
+              <div class="w-full max-w-3xl flex flex-col gap-6" id="pdf-scroller-layout">
+                <div class="text-center py-3 text-xs text-slate-400 uppercase font-mono tracking-widest block bg-slate-900 border border-white/5 rounded-2xl font-sans">
+                  Ảnh trích xuất gốc từ cấu trúc PDF.js (Bấm ảnh riêng biệt dưới để coi chi tiết)
+                </div>
+                
+                <!-- Page renders -->
+                @for (page of pdfPages(); track page.pageNum) {
+                  <div class="border border-white/10 rounded-2xl overflow-hidden bg-slate-950 shadow-md p-4 space-y-4">
+                    <div class="text-xs font-mono text-slate-400 flex justify-between">
+                      <span class="font-bold">Trang số {{ page.pageNum }}</span>
+                      <span>Ảnh riêng lẻ bóc được: {{ page.extractedImages.length || 0 }} ảnh</span>
+                    </div>
+                    
+                    <div class="border border-white/5 rounded-xl overflow-hidden max-w-md mx-auto">
+                      <img [src]="page.pageImageUrl" alt="Trang {{ page.pageNum }}" class="w-full h-auto object-contain" referrerpolicy="no-referrer" />
+                    </div>
+
+                    @if (page.extractedImages && page.extractedImages.length > 0) {
+                      <div class="border-t border-white/5 pt-4">
+                        <span class="text-[11px] text-slate-400 font-semibold block mb-2 font-sans">Hình ảnh lẻ (đã lưu trữ IndexedDB, gắn nhãn rành mạch):</span>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          @for (img of page.extractedImages; track img.labeledKey) {
+                            <div class="bg-slate-900 border border-white/5 p-2 rounded-xl flex flex-col items-center">
+                              <button type="button" (click)="zoomImageUrl.set(img.dataUrl)" class="cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-lg p-1" title="Nhấp để phóng to ảnh">
+                                <img [src]="img.dataUrl" alt="{{ img.labeledKey }}" class="h-20 object-contain" referrerpolicy="no-referrer" />
+                              </button>
+                              <span class="text-[10px] font-bold text-indigo-400 mt-2 font-mono">{{ img.labeledKey }}</span>
+                              <span class="text-[8px] text-slate-500 font-mono">{{ img.width }}x{{ img.height }}px</span>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    } @else {
+                      <span class="text-[10px] text-slate-600 block text-center italic font-sans">Trang này không có tệp tin ảnh rời rạc</span>
+                    }
+
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Source HTML code view -->
+            @if (selectedTab() === 'source') {
+              <div class="w-full max-w-4xl h-full flex flex-col bg-slate-950" id="html-source-preview">
+                <div class="flex justify-between items-center mb-4 shrink-0 bg-slate-900/50 p-4 border border-white/5 rounded-2xl font-sans">
+                  <div>
+                    <span class="text-xs font-bold text-slate-200">Mã nguồn HTML đã dịch / bóc tách</span>
+                    <span class="block text-[10px] text-slate-400 mt-0.5">Sẵn sàng để dán trực tiếp vào website của bạn</span>
+                  </div>
+                  <div class="flex gap-2">
+                    <button 
+                      (click)="copyHtmlCode()" 
+                      class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
+                      <mat-icon class="text-xs">content_copy</mat-icon>
+                      Sao Chép Mã HTML
+                    </button>
+                    <button 
+                      (click)="downloadHtmlFile()" 
+                      class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition border border-white/5">
+                      <mat-icon class="text-xs">download</mat-icon>
+                      Tải .html
+                    </button>
+                  </div>
+                </div>
+                
+                <div class="flex-grow bg-slate-950 border border-white/5 rounded-2xl overflow-y-auto p-4 font-mono text-xs text-emerald-400 select-all leading-relaxed whitespace-pre-wrap">
+                  {{ activeReflowMode() === 'ai' ? aiReflowHtml() : clientReflowHtml() }}
+                </div>
+              </div>
+            }
+
+          </div>
+
+        </div>
+
+      </div>
+    }
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-white/5 bg-slate-950/60 py-5 px-6 shrink-0 z-10">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-4 text-xs font-sans">
+      <div class="flex flex-wrap justify-center items-center gap-2.5 sm:gap-4 text-slate-400">
+        <span class="text-slate-400">v1.0.0</span>
+        <span class="text-slate-800 font-light text-xs select-none">•</span>
+        <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors duration-200">GitHub</a>
+        <span class="text-slate-800 font-light text-xs select-none">•</span>
+        <span class="text-slate-200 font-semibold">Nguyễn Đức Anh</span>
+        <span class="text-slate-800 font-light text-xs select-none">•</span>
+        <a href="mailto:contact@wpsila.com" class="hover:text-white transition-colors duration-200 font-mono">contact@wpsila.com</a>
+        <span class="text-slate-800 font-light text-xs select-none">•</span>
+        <button type="button" (click)="showInstruction.set(true)" class="text-indigo-400 hover:text-indigo-300 font-medium transition-colors duration-200 cursor-pointer focus:outline-none">
+          Hướng dẫn sử dụng
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- User Guide Interactive Modal -->
+  @if (showInstruction()) {
+    <div 
+      role="button"
+      tabindex="0"
+      (click)="showInstruction.set(false)"
+      (keydown.escape)="showInstruction.set(false)"
+      class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in cursor-zoom-out">
+      
+      <div 
+        role="document"
+        tabindex="0"
+        (click)="$event.stopPropagation()"
+        (keydown)="$event.stopPropagation()"
+        class="bg-slate-900 border border-white/10 rounded-3xl max-w-lg w-full p-6 md:p-8 shadow-2xl relative text-left cursor-default animate-scale-up">
+        
+        <!-- Close Button -->
+        <button 
+          type="button"
+          (click)="showInstruction.set(false)"
+          class="absolute top-4 right-4 p-2 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors focus:outline-none">
+          <mat-icon class="flex items-center justify-center">close</mat-icon>
+        </button>
+
+        <div class="flex items-center gap-3 mb-6">
+          <div class="h-10 w-10 rounded-xl bg-indigo-500/15 flex items-center justify-center text-indigo-400 border border-indigo-500/10">
+            <mat-icon>chrome_reader_mode</mat-icon>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-white font-display">Hướng dẫn sử dụng</h3>
+            <p class="text-[11px] text-slate-400">Cách sản xuất sách EPUB chuẩn chất lượng cao</p>
+          </div>
+        </div>
+
+        <div class="space-y-4 font-sans text-xs text-slate-350 leading-relaxed">
+          <div class="flex gap-3">
+            <div class="h-6 w-6 rounded-lg bg-indigo-600/25 border border-indigo-500/20 text-indigo-400 font-bold font-mono text-xs flex items-center justify-center shrink-0 mt-0.5">1</div>
+            <div>
+              <p class="font-bold text-slate-200 mb-0.5">Nạp dữ liệu gốc</p>
+              <p>Kéo thả trực tiếp tệp tin PDF hoặc nhấp chọn tệp từ máy tính. Hệ thống sẽ tự dùng thư viện PDF.js giải nén cấu trúc thô và tách chiết tất cả hình ảnh rời rạc lưu cực kì an toàn vào bộ nhớ IndexedDB của trình duyệt.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-3">
+            <div class="h-6 w-6 rounded-lg bg-indigo-600/25 border border-indigo-500/20 text-indigo-400 font-bold font-mono text-xs flex items-center justify-center shrink-0 mt-0.5">2</div>
+            <div>
+              <p class="font-bold text-slate-200 mb-0.5">Điền khóa bảo mật Gemini API Key</p>
+              <p>Bản cấu trúc thô từ thiết bị (văn bản chưa dàn trang, danh sách ảnh nằm lẻ) cần trí khôn AI để ráp nối. Điền khóa API Key ở bảng thiết lập để kích hoạt bộ não AI.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-3">
+            <div class="h-6 w-6 rounded-lg bg-indigo-600/25 border border-indigo-500/20 text-indigo-400 font-bold font-mono text-xs flex items-center justify-center shrink-0 mt-0.5">3</div>
+            <div>
+              <p class="font-bold text-slate-200 mb-0.5">Kích hoạt Tối ưu và Định vị bằng AI</p>
+              <p>Chọn phong cách bạn mong muốn (Văn xuôi, Tạp chí hoặc Đặc tả kỹ thuật học thuật), sau đó nhấp <strong>Ráp nội dung & Ảnh bằng AI</strong>. Mô hình đa phương thức tiên tiến sẽ phân tích kỹ từng bức ảnh và nhúng chuẩn nhãn <code class="bg-slate-950 px-1 py-0.5 text-indigo-400 font-mono rounded">![IMG-XX]</code> vào đúng ngữ cảnh gốc.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-3">
+            <div class="h-6 w-6 rounded-lg bg-indigo-600/25 border border-indigo-500/20 text-indigo-400 font-bold font-mono text-xs flex items-center justify-center shrink-0 mt-0.5">4</div>
+            <div>
+              <p class="font-bold text-slate-200 mb-0.5">Xuất bản tinh hoa</p>
+              <p>Hệ thống tự động gói dữ liệu xịn thành tệp sách <strong>EPUB 3 chuẩn hóa</strong> bọc sẵn các bức ảnh độ phân giải cao, hỗ trợ tải về lưu trữ và xem tốt trên mọi máy đọc sách Kindle, Kobo, iPad.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-white/5 mt-6 pt-4 flex justify-end">
+          <button 
+            type="button" 
+            (click)="showInstruction.set(false)"
+            class="px-5 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 rounded-xl text-white transition-colors duration-200">
+            Tôi đã hiểu
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
+
+  <!-- Interactive Lightbox Modal for extracted photos -->
+  @if (zoomImageUrl(); as zoomSrc) {
+    <div 
+      role="button"
+      tabindex="0"
+      (click)="zoomImageUrl.set(null)"
+      (keydown.escape)="zoomImageUrl.set(null)"
+      class="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in cursor-zoom-out">
+      <div class="absolute top-4 right-4 text-white">
+        <button class="h-10 w-10 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      <div class="max-w-4xl max-h-[85vh] p-2 bg-slate-900/40 rounded-3xl overflow-hidden shadow-2xl flex items-center justify-center">
+        <img [src]="zoomSrc" alt="Bản xem phóng" class="max-w-full max-h-[80vh] object-contain rounded-2xl animate-scale-up" referrerpolicy="no-referrer" />
+      </div>
+    </div>
+  }
+
+  <!-- API Key Setup Interactive Modal -->
+  @if (showApiKeyModal()) {
+    <div 
+      role="button"
+      tabindex="0"
+      (click)="showApiKeyModal.set(false)"
+      (keydown.escape)="showApiKeyModal.set(false)"
+      class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in cursor-zoom-out">
+      
+      <div 
+        role="document"
+        tabindex="0"
+        (click)="$event.stopPropagation()"
+        (keydown)="$event.stopPropagation()"
+        class="bg-slate-900 border border-white/10 rounded-3xl max-w-xl w-full p-6 md:p-8 shadow-2xl relative text-left cursor-default animate-scale-up">
+        
+        <!-- Close Button -->
+        <button 
+          type="button"
+          (click)="showApiKeyModal.set(false)"
+          class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors focus:outline-none">
+          <mat-icon class="text-[20px] w-5 h-5 flex items-center justify-center">close</mat-icon>
+        </button>
+
+        <div class="flex items-center gap-3 mb-6">
+          <div class="h-10 w-10 rounded-xl bg-indigo-500/15 flex items-center justify-center text-indigo-400 border border-indigo-500/10">
+            <mat-icon>vpn_key</mat-icon>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-white font-display">Cấu hình Gemini API Key</h3>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <!-- Description -->
+          <p class="text-xs text-slate-350 leading-relaxed font-sans">
+            Để sử dụng công cụ chuyển đổi này bạn cần khóa API Key của Gemini. Bạn hãy vào link "Nơi lấy API Key Gemini" để thao tác. Key miễn phí chỉ có hiệu lực nếu bạn dùng ứng dụng qua AI Studio, với ai dùng trên <span class="text-indigo-400 font-medium font-mono">pdf2epub.wpsila.com</span>, chỉ Key trả phí mới dùng được. Hãy remix ứng dụng trên AI Studio để dùng miễn phí.
+          </p>
+
+          <!-- Alert/Source bar -->
+          <div class="bg-slate-950/60 border border-white/5 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-2">
+              @if (!tempApiKey().trim()) {
+                <span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2.5 py-1 rounded-lg text-[11px] font-medium font-sans">
+                  Bạn chưa nhập API Key cho ứng dụng
+                </span>
+              } @else {
+                <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-lg text-[11px] font-medium font-sans font-semibold">
+                  Đã nhập API Key cho ứng dụng
+                </span>
+              }
+            </div>
+            
+            <div class="flex items-center gap-2 text-xs">
+              <span class="text-slate-800 hidden sm:inline select-none">|</span>
+              <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+                Nơi lấy API Key Gemini
+              </a>
+            </div>
+          </div>
+
+          <!-- Input section -->
+          <div class="space-y-2">
+            <label for="modal-gemini-key-input" class="block text-[10px] font-sans font-bold text-slate-400 uppercase tracking-wider">
+              Gemini API Key cá nhân
+            </label>
+            <div class="relative bg-slate-950 border border-white/15 rounded-xl overflow-hidden focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500/25 transition-all">
+              <input 
+                id="modal-gemini-key-input"
+                [type]="showApiKey() ? 'text' : 'password'"
+                placeholder="AIzaSy..." 
+                [value]="tempApiKey()"
+                (input)="tempApiKey.set($any($event.target).value)"
+                class="w-full bg-transparent pl-4 pr-12 py-3 text-xs text-slate-200 placeholder-slate-700 font-mono focus:outline-none" />
+              <button 
+                type="button" 
+                (click)="showApiKey.set(!showApiKey())"
+                class="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-200 shrink-0 transition-colors focus:outline-none outline-none hover:bg-white/5 rounded-lg">
+                <mat-icon class="text-[20px] w-5 h-5 flex items-center justify-center">
+                  {{ showApiKey() ? 'visibility_off' : 'visibility' }}
+                </mat-icon>
+              </button>
+            </div>
+            <!-- Security note -->
+            <p class="text-[11px] text-slate-400 font-sans leading-normal">
+              Khóa API của bạn được lưu cục bộ tuyệt đối trong trình duyệt của bạn ( <code class="bg-slate-950 px-1.5 py-0.5 font-mono rounded text-indigo-400">LocalStorage</code> ), không bao giờ gửi lên bất kỳ máy chủ nào khác.
+            </p>
+          </div>
+          
+          <!-- Actions footer buttons -->
+          <div class="border-t border-white/5 pt-4 flex items-center justify-between">
+            <button 
+              type="button" 
+              (click)="clearApiKeyModal()"
+              class="px-4 py-2 flex items-center text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 rounded-xl transition-colors duration-200 focus:outline-none">
+              Xóa Key cá nhân
+            </button>
+            
+            <div class="flex items-center gap-3">
+              <button 
+                type="button" 
+                (click)="showApiKeyModal.set(false)"
+                class="px-5 py-2 text-xs font-semibold bg-white/5 hover:bg-white/10 rounded-xl text-slate-300 transition-colors duration-200 focus:outline-none">
+                Hủy
+              </button>
+              <button 
+                type="button" 
+                (click)="saveApiKeyModal()"
+                class="px-5 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-750 rounded-xl text-white transition-colors duration-200 shadow-md shadow-indigo-600/15 focus:outline-none">
+                Lưu cấu hình
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>
