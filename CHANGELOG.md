@@ -10,3 +10,4 @@ và dự án này tuân thủ [Semantic Versioning](https://semver.org/spec/v2.0
 - Xóa các file serverside không cần dùng đến, vì ứng dụng là clientside;
 - Điều chỉnh kích cỡ button tải EPUB to hơn;
 - Loại bỏ các thông tin dư thừa hoặc dễ gây hiểu nhầm trong phase2;
+- Loại bỏ việc hiển thị mã HTML và Markdown không cần thiết; Vẫn duy trì nút tải về;
