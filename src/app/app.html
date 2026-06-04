@@ -144,7 +144,7 @@
 
           @if (!isParsing()) {
             <div class="text-[11px] font-sans font-medium text-slate-500 mb-6 text-center">
-              Tối đa: 50MB (không quá 500 trang)
+              [Tối đa: 50MB / 500 trang]
             </div>
           }
 
@@ -237,7 +237,7 @@
                  <div class="text-[10px] text-rose-400 font-mono text-center animate-pulse">
                    ⏳ Đang chờ hoàn tất nốt tiến trình dang dở...
                  </div>
-               } @else if (isBatchProcessing()) {
+               } @else if (false) {
                  <div class="text-[10px] text-indigo-400 font-mono text-center animate-pulse">
                    ⚙️ Đang xử lý song song 2 khối cùng lúc...
                  </div>
@@ -388,44 +388,47 @@
 
             <!-- Canvas View (Original exact PDF page renders) -->
             @if (selectedTab() === 'pdf') {
-              <div class="w-full max-w-3xl flex flex-col gap-6" id="pdf-scroller-layout">
-                <div class="text-center py-3 text-xs text-slate-400 uppercase font-mono tracking-widest block bg-slate-900 border border-white/5 rounded-2xl font-sans">
+              <div class="w-full max-w-3xl flex flex-col gap-4" id="pdf-scroller-layout">
+                <div class="text-center py-3 text-xs text-slate-400 uppercase font-mono tracking-widest block bg-slate-900 border border-white/5 rounded-2xl font-sans shrink-0">
                   Ảnh trích xuất gốc từ cấu trúc PDF.js (Bấm ảnh riêng biệt dưới để coi chi tiết)
                 </div>
                 
-                <!-- Page renders -->
-                @for (page of (activeChunk()?.pages || []); track page.pageNum) {
-                  <div class="border border-white/10 rounded-2xl overflow-hidden bg-slate-950 shadow-md p-4 space-y-4">
-                    <div class="text-xs font-mono text-slate-400 flex justify-between">
-                      <span class="font-bold">Trang số {{ page.pageNum }}</span>
-                      <span>Số ảnh riêng lẻ tách được: {{ page.extractedImages.length || 0 }} ảnh</span>
-                    </div>
-                    
-                    <div class="border border-white/5 rounded-xl overflow-hidden max-w-md mx-auto">
-                      <img [src]="page.pageImageUrl" alt="Trang {{ page.pageNum }}" class="w-full h-auto object-contain" referrerpolicy="no-referrer" />
-                    </div>
-
-                    @if (page.extractedImages && page.extractedImages.length > 0) {
-                      <div class="border-t border-white/5 pt-4">
-                        <span class="text-[11px] text-slate-400 font-semibold block mb-2 font-sans">Hình ảnh lẻ (đã lưu trữ IndexedDB, gắn nhãn rành mạch):</span>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                          @for (img of page.extractedImages; track img.labeledKey) {
-                            <div class="bg-slate-900 border border-white/5 p-2 rounded-xl flex flex-col items-center">
-                              <button type="button" (click)="zoomImageUrl.set(img.dataUrl)" class="cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-lg p-1" title="Nhấp để phóng to ảnh">
-                                <img [src]="img.dataUrl" alt="{{ img.labeledKey }}" class="h-20 object-contain" referrerpolicy="no-referrer" />
-                              </button>
-                              <span class="text-[10px] font-bold text-indigo-400 mt-2 font-mono">{{ img.labeledKey }}</span>
-                              <span class="text-[8px] text-slate-500 font-mono">{{ img.width }}x{{ img.height }}px</span>
-                            </div>
-                          }
-                        </div>
+                <!-- Bounded height scrollable container with customized subtle scrollbar styling -->
+                <div class="max-h-[62vh] overflow-y-auto pr-2 flex flex-col gap-5 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+                  <!-- Page renders -->
+                  @for (page of (activeChunk()?.pages || []); track page.pageNum) {
+                    <div class="border border-white/10 rounded-2xl overflow-hidden bg-slate-950 shadow-md p-4 space-y-4 shrink-0">
+                      <div class="text-xs font-mono text-slate-400 flex justify-between">
+                        <span class="font-bold">Trang số {{ page.pageNum }}</span>
+                        <span>Số ảnh riêng lẻ tách được: {{ page.extractedImages.length || 0 }} ảnh</span>
                       </div>
-                    } @else {
-                      <span class="text-[10px] text-slate-600 block text-center italic font-sans">Trang này không có tệp tin ảnh rời rạc</span>
-                    }
+                      
+                      <div class="border border-white/5 rounded-xl overflow-hidden max-w-md mx-auto">
+                        <img [src]="page.pageImageUrl" alt="Trang {{ page.pageNum }}" class="w-full h-auto object-contain" referrerpolicy="no-referrer" />
+                      </div>
 
-                  </div>
-                }
+                      @if (page.extractedImages && page.extractedImages.length > 0) {
+                        <div class="border-t border-white/5 pt-4">
+                          <span class="text-[11px] text-slate-400 font-semibold block mb-2 font-sans">Hình ảnh lẻ (đã lưu trữ IndexedDB, gắn nhãn rành mạch):</span>
+                          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            @for (img of page.extractedImages; track img.labeledKey) {
+                              <div class="bg-slate-900 border border-white/5 p-2 rounded-xl flex flex-col items-center">
+                                <button type="button" (click)="zoomImageUrl.set(img.dataUrl)" class="cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-lg p-1" title="Nhấp để phóng to ảnh">
+                                  <img [src]="img.dataUrl" alt="{{ img.labeledKey }}" class="h-20 object-contain" referrerpolicy="no-referrer" />
+                                </button>
+                                <span class="text-[10px] font-bold text-indigo-400 mt-2 font-mono">{{ img.labeledKey }}</span>
+                                <span class="text-[8px] text-slate-500 font-mono">{{ img.width }}x{{ img.height }}px</span>
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      } @else {
+                        <span class="text-[10px] text-slate-600 block text-center italic font-sans">Trang này không có tệp tin ảnh rời rạc</span>
+                      }
+
+                    </div>
+                  }
+                </div>
               </div>
             }
 
@@ -480,7 +483,7 @@
 
       <!-- Center side: Links -->
       <div class="flex flex-wrap justify-center items-center gap-2.5 sm:gap-4 shrink-0 text-slate-400">
-        <span class="text-slate-400">v1.0.7</span>
+        <span class="text-slate-400">v1.0.8</span>
         <span class="text-slate-800 font-light text-xs select-none">•</span>
         <a href="https://github.com/kiencang/pdf-2-epub" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors duration-200 cursor-pointer">GitHub</a>
         <span class="text-slate-800 font-light text-xs select-none">•</span>
