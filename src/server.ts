@@ -58,7 +58,7 @@ Hãy tái cấu trúc văn bản thô này thành mã nguồn HTML hoàn chỉnh
 Các quy tắc tuyệt đối:
 1. Tạo cấu trúc ngữ nghĩa HTML5 chuẩn: Sử dụng các thẻ <article>, <h2>, <h3>, <p>, <ul>, <ol>, <li>, <blockquote>, <table class="w-full text-left my-4 table">, <pre class="p-4 bg-slate-900 text-white rounded mb-4"><code>...
 2. KHÔNG bao gồm các thẻ ngoài rìa như <html>, <head>, <body> hoặc <iframe>. Chỉ xuất ra nội dung bên trong lớp bọc (ví dụ: bọc bởi một thẻ <article class="prose max-w-full text-slate-800 leading-relaxed">).
-3. Sử dụng các class CSS của Tailwind CSS trực tiếp để trang trí bài viết thật đẹp mắt (ví dụ: text-indigo-900, mb-4, font-medium, border-l-4 border-emerald-500, font-serif cho trích dẫn...).
+3. Sử dụng các class CSS của Tailwind CSS trực tiếp để trang trí bài viết thật đẹp mắt (ví dụ: text-indigo-900, mb-4, font-medium, border-l-4 border-emerald-500, font-sans cho trích dẫn...).
 4. Phát hiện các tiêu đề chính, tiêu đề phụ, đoạn văn thông thường, bảng biểu (tables) hoặc danh sách để đưa về thẻ HTML tương ứng đúng đắn.
 5. Nếu trong văn bản thô có ám chỉ về hình ảnh (như "Hình 1:", "Figure 2:", "Image:", "Ảnh minh họa" hoặc có khoảng trống lớn giữa văn bản), hãy chèn một thẻ ảnh rỗng làm placeholder đúng cú pháp sau:
    <div class="pdf-image-placeholder my-6 border border-dashed border-slate-300 rounded-xl p-4 flex flex-col items-center justify-center bg-slate-50" data-image-index="SỐ_THỨ_TỰ">

@@ -48,13 +48,13 @@ export class MarkdownRenderer {
       }
 
       if (trimmed.startsWith('# ')) {
-        return `<h1 class="text-3xl font-extrabold font-display text-slate-900 tracking-tight mt-8 mb-4 border-b pb-2 border-slate-100">${trimmed.substring(2)}</h1>`;
+        return `<h1 class="text-3xl font-extrabold font-sans text-slate-900 tracking-tight mt-8 mb-4 border-b pb-2 border-slate-100">${trimmed.substring(2)}</h1>`;
       }
       if (trimmed.startsWith('## ')) {
-        return `<h2 class="text-2xl font-bold font-display text-slate-800 tracking-tight mt-6 mb-3 border-b pb-1.5 border-slate-100">${trimmed.substring(3)}</h2>`;
+        return `<h2 class="text-2xl font-bold font-sans text-slate-800 tracking-tight mt-6 mb-3 border-b pb-1.5 border-slate-100">${trimmed.substring(3)}</h2>`;
       }
       if (trimmed.startsWith('### ')) {
-        return `<h3 class="text-xl font-semibold font-display text-slate-800 mt-4 mb-2">${trimmed.substring(4)}</h3>`;
+        return `<h3 class="text-xl font-semibold font-sans text-slate-800 mt-4 mb-2">${trimmed.substring(4)}</h3>`;
       }
 
       if (trimmed.startsWith('&gt;')) {

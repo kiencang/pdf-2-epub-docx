@@ -510,7 +510,6 @@ Nhiệm vụ của bạn:
     const activeHtml = this.activeReflowMode() === 'ai' ? this.aiReflowHtml() : this.clientReflowHtml();
     
     let fontClass = 'font-sans';
-    if (this.themeStyle() === 'warm') fontClass = 'font-serif';
     if (this.themeStyle() === 'mono') fontClass = 'font-mono';
 
     const fullHtmlSource = `<!DOCTYPE html>
@@ -520,13 +519,11 @@ Nhiệm vụ của bạn:
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${this.fileName() || 'Tài liệu chuyển đổi - PDF HTML'}</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
       --font-sans: "Inter", sans-serif;
       --font-mono: "JetBrains Mono", monospace;
-      --font-display: "Outfit", sans-serif;
-      --font-serif: "Newsreader", serif;
     }
     @media print {
       .no-print { display: none !important; }
