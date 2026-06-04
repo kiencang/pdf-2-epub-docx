@@ -10,6 +10,7 @@ và dự án này tuân thủ [Semantic Versioning](https://semver.org/spec/v2.0
 - Truyền dữ liệu gốc cùng ảnh vào để quá trình chuyển đổi thành markdown được chính xác hơn thay vì phụ thuộc vào văn bản được trích xuất từ PDF.js;
 - Khi button ráp nối được click để truyền dữ liệu lên AI, các button khác phải bị vô hiệu hóa;
 - Thêm đồng hồ đếm giờ;
+- Giới hạn dung lượng file PDF tải lên. Dung lượng tối đa 50 MB, số trang tối đa 500 trang;
 
 ## [v1.0.4]- 2026-06-04
 ### Fixed
