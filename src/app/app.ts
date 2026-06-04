@@ -66,22 +66,18 @@ export class App {
   tempApiKey = signal('');
   private successTimeout: any = null;
   selectedTab = signal<'reflow' | 'pdf' | 'source' | 'markdown'>('reflow');
-  activeReflowMode = signal<'client' | 'ai'>('client');
   themeStyle = signal<'clean' | 'warm' | 'mono'>('clean');
 
   // AI Configuration Options
   clientApiKey = signal('');
 
   // Markdown representations
-  clientMarkdown = signal('');
-  aiMarkdown = signal('');
+  markdownContent = signal('');
 
   // HTML representations (rendered from Markdown)
-  clientReflowHtml = signal('');
-  aiReflowHtml = signal('');
+  reflowHtml = signal('');
   
-  clientReflowSafeHtml = computed(() => this.sanitizer.bypassSecurityTrustHtml(this.clientReflowHtml()));
-  aiReflowSafeHtml = computed(() => this.sanitizer.bypassSecurityTrustHtml(this.aiReflowHtml()));
+  reflowSafeHtml = computed(() => this.sanitizer.bypassSecurityTrustHtml(this.reflowHtml()));
 
   // Image Lighbox Modal
   zoomImageUrl = signal<string | null>(null);
@@ -204,11 +200,8 @@ export class App {
     this.fileSize.set(this.pdfProcessor.formatBytes(file.size));
     this.pdfFile.set(file);
     this.pdfPages.set([]);
-    this.clientReflowHtml.set('');
-    this.aiReflowHtml.set('');
-    this.clientMarkdown.set('');
-    this.aiMarkdown.set('');
-    this.activeReflowMode.set('client');
+    this.reflowHtml.set('');
+    this.markdownContent.set('');
 
     try {
       this.parsingStatus.set('Đang dọn dẹp bộ nhớ ảnh cũ trong IndexedDB...');
@@ -298,15 +291,7 @@ export class App {
         }
       }
 
-      this.parsingStatus.set('Đang thiết lập bản cấu trúc Markdown xem trước...');
-
-      // Generate default client markdown layout
-      const clientMd = this.pdfProcessor.generateDefaultClientMarkdown(itemsExtracted);
-      this.clientMarkdown.set(clientMd);
-
-      // Render default markdown to beautiful HTML for reading tab
-      const clientHtml = this.pdfProcessor.renderMarkdownToHtml(clientMd, itemsExtracted);
-      this.clientReflowHtml.set(clientHtml);
+      this.parsingStatus.set('Đang thiết lập bản gốc...');
 
       this.selectedTab.set('pdf');
       this.showSuccess('Đã trích xuất ảnh thành công từ file PDF');
@@ -477,13 +462,12 @@ Chúng tôi đính kèm danh sách các hình ảnh thực tế bóc tách đư�
         }
       }
 
-      this.aiMarkdown.set(rawMarkdown);
+      this.markdownContent.set(rawMarkdown);
       
       // Parse output Markdown to HTML preview
       const renderedHtml = this.pdfProcessor.renderMarkdownToHtml(rawMarkdown, this.pdfPages());
-      this.aiReflowHtml.set(renderedHtml);
+      this.reflowHtml.set(renderedHtml);
       
-      this.activeReflowMode.set('ai');
       this.selectedTab.set('reflow');
       this.showSuccess('Đã ráp nội dung & ảnh thành công. Bạn hãy tải file EPUB về.');
     } catch (err: any) {
@@ -502,7 +486,7 @@ Chúng tôi đính kèm danh sách các hình ảnh thực tế bóc tách đư�
    * Triggers download of strict EPUB zip standard package
    */
   async downloadEpubFile() {
-    const activeMarkdown = this.activeReflowMode() === 'ai' ? this.aiMarkdown() : this.clientMarkdown();
+    const activeMarkdown = this.markdownContent();
     if (!activeMarkdown || activeMarkdown.trim() === '') {
       this.apiError.set('Không có dữ liệu văn bản để chuyển đổi thành EPUB.');
       return;
@@ -536,7 +520,7 @@ Chúng tôi đính kèm danh sách các hình ảnh thực tế bóc tách đư�
    * Download original clean .md Markdown file
    */
   downloadMarkdownFile() {
-    const activeMarkdown = this.activeReflowMode() === 'ai' ? this.aiMarkdown() : this.clientMarkdown();
+    const activeMarkdown = this.markdownContent();
     if (!activeMarkdown || activeMarkdown.trim() === '') {
       this.apiError.set('Không có dữ liệu Markdown để tải.');
       return;
@@ -559,7 +543,7 @@ Chúng tôi đính kèm danh sách các hình ảnh thực tế bóc tách đư�
    * Triggers file download of self-contained file
    */
   downloadHtmlFile() {
-    const activeHtml = this.activeReflowMode() === 'ai' ? this.aiReflowHtml() : this.clientReflowHtml();
+    const activeHtml = this.reflowHtml();
     
     let fontClass = 'font-sans';
     if (this.themeStyle() === 'mono') fontClass = 'font-mono';

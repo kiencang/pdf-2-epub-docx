@@ -5,7 +5,6 @@ import { PdfDb } from './pdf-db';
 import { ImageExtractor } from './image-extractor';
 import { MarkdownRenderer } from './markdown-renderer';
 import { EpubExporter } from './epub-exporter';
-import { ClientMarkdownGenerator } from './client-markdown-generator';
 
 export interface PdfPageData {
   pageNum: number;
@@ -122,12 +121,5 @@ export class PdfProcessor {
    */
   generateEpub(title: string, markdownContent: string, pdfPages: PdfPageData[]): Promise<Blob> {
     return EpubExporter.generateEpub(title, markdownContent, pdfPages);
-  }
-
-  /**
-   * Heuristic default text reflow client-side fallback delegation
-   */
-  generateDefaultClientMarkdown(pages: PdfPageData[]): string {
-    return ClientMarkdownGenerator.generateDefaultClientMarkdown(pages);
   }
 }

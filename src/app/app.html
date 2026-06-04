@@ -155,7 +155,7 @@
 
               <!-- Reset current PDF -->
               <button 
-                (click)="pdfPages.set([]); clientReflowHtml.set(''); aiReflowHtml.set(''); clientMarkdown.set(''); aiMarkdown.set('');"
+                (click)="pdfPages.set([]); reflowHtml.set(''); markdownContent.set('');"
                 [disabled]="isOptimizing() || isParsing()"
                 class="w-full mt-4 flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-white/5 hover:bg-rose-500/10 text-slate-300 hover:text-rose-300 rounded-lg transition border border-white/5 font-sans disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/5 disabled:hover:text-slate-300">
                 <mat-icon class="text-sm">restart_alt</mat-icon>
@@ -203,7 +203,7 @@
                 Ảnh & Bản Gốc (PDF)
               </button>
               
-              @if (activeReflowMode() === 'ai') {
+              @if (reflowHtml()) {
                 <button 
                   (click)="selectedTab.set('reflow')"
                   class="px-4 py-2.5 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 font-sans"
@@ -232,7 +232,7 @@
 
             <!-- Action Bar: Export EPUB -->
             <div class="flex items-center gap-4 text-xs font-sans">
-              @if (activeReflowMode() === 'ai') {
+              @if (reflowHtml()) {
                 <button 
                   (click)="downloadEpubFile()"
                   [disabled]="isParsing() || isOptimizing()"
@@ -257,12 +257,9 @@
                   'bg-zinc-950 text-zinc-200 border-zinc-900 font-mono': themeStyle() === 'mono'
                 }">
                 
-                @if (activeReflowMode() === 'ai' && aiReflowHtml()) {
+                @if (reflowHtml()) {
                   <!-- Render optimized AI output -->
-                  <div class="prose max-w-none text-justify flex flex-col" [innerHTML]="aiReflowSafeHtml()"></div>
-                } @else {
-                  <!-- Render clean local output -->
-                  <div class="prose max-w-none text-justify flex flex-col animate-fade-in" [innerHTML]="clientReflowSafeHtml()"></div>
+                  <div class="prose max-w-none text-justify flex flex-col" [innerHTML]="reflowSafeHtml()"></div>
                 }
 
               </div>
@@ -378,7 +375,7 @@
 
       <!-- Center side: Links -->
       <div class="flex flex-wrap justify-center items-center gap-2.5 sm:gap-4 shrink-0 text-slate-400">
-        <span class="text-slate-400">v1.0.5</span>
+        <span class="text-slate-400">v1.0.6</span>
         <span class="text-slate-800 font-light text-xs select-none">•</span>
         <a href="https://github.com/kiencang/pdf-2-epub" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors duration-200 cursor-pointer">GitHub</a>
         <span class="text-slate-800 font-light text-xs select-none">•</span>
