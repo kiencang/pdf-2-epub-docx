@@ -50,6 +50,7 @@ export class App {
   // UI state
   showApiKey = signal(false);
   showApiKeyModal = signal(false);
+  isDevMode = signal(false);
   tempApiKey = signal('');
   private successTimeout: any = null;
   selectedTab = signal<'reflow' | 'pdf' | 'source' | 'markdown'>('reflow');
@@ -279,6 +280,7 @@ export class App {
       const clientHtml = this.pdfProcessor.renderMarkdownToHtml(clientMd, itemsExtracted);
       this.clientReflowHtml.set(clientHtml);
 
+      this.selectedTab.set('pdf');
       this.showSuccess('Đã trích xuất ảnh thành công từ file PDF');
       this.isParsing.set(false);
       this.parsingStatus.set('');
@@ -301,7 +303,7 @@ export class App {
 
     const apiKey = this.clientApiKey().trim();
     if (!apiKey) {
-      this.apiError.set('Vui lòng điền Gemini API Key của bạn ở mục thiết lập cột bên trái để sử dụng công cụ AI này.');
+      this.apiError.set('Vui lòng điền Gemini API Key của bạn ở mục *Nhập API Key* nằm ở phía trên bên phải.');
       return;
     }
 
@@ -409,6 +411,7 @@ Nhiệm vụ của bạn:
       this.aiReflowHtml.set(renderedHtml);
       
       this.activeReflowMode.set('ai');
+      this.selectedTab.set('reflow');
       this.showSuccess('Đã bóc tách cấu trúc và liên kết ảnh thành công bằng Mô hình Đa phương thức AI!');
     } catch (err: any) {
       console.error(err);

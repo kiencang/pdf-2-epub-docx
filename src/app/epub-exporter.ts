@@ -121,13 +121,17 @@ code {
       imageManifestItems += `    <item id="${img.id}" href="${img.fileName}" media-type="image/png"/>\n`;
     });
 
-    zip.file('OEBPS/content.opf', `<?xml version="1.5" encoding="UTF-8"?>
-<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookID" version="3.0">
-  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    const currentDate = new Date().toISOString().split('.')[0] + 'Z';
+    zip.file('OEBPS/content.opf', `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns:opf="http://www.idpf.org/2007/opf" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id" xml:lang="vi">
+  <metadata>
+    <dc:identifier id="id">urn:uuid:${uuid}</dc:identifier>
+    <dc:creator id="author_0">PDF-2-EPUB AI Converter</dc:creator>
+    <meta property="file-as" refines="#author_0">PDF-2-EPUB AI Converter</meta>
+    <meta property="role" refines="#author_0" scheme="marc:relators">aut</meta>
     <dc:title>${title}</dc:title>
-    <dc:creator>PDF-2-EPUB AI Converter</dc:creator>
     <dc:language>vi</dc:language>
-    <dc:identifier id="BookID">urn:uuid:${uuid}</dc:identifier>
+    <meta property="dcterms:modified">${currentDate}</meta>
   </metadata>
   <manifest>
     <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
