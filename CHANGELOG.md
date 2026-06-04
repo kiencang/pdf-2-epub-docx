@@ -8,7 +8,7 @@ và dự án này tuân thủ [Semantic Versioning](https://semver.org/spec/v2.0
 ## [v1.0.4]- 2026-06-04
 ### Fixed
 - Điều chỉnh cách tạo file EPUB đúng chuẩn hơn;
-- Điều chỉnh giao diện phase2, ẩn đi các nút không cần thiết, nhất là khi chia ráp nội dung, mới chỉ xem trước;
+- Điều chỉnh giao diện phase2, ẩn đi các nút không cần thiết, nhất là khi chưa ráp nội dung, mới chỉ xem trước;
 
 ## [v1.0.3]- 2026-06-04
 ### Fixed
