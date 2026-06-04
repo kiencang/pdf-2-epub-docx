@@ -58,7 +58,6 @@ export class App {
 
   // AI Configuration Options
   clientApiKey = signal('');
-  customPrompt = signal('');
 
   // Markdown representations
   clientMarkdown = signal('');
@@ -336,10 +335,6 @@ Nhiệm vụ của bạn:
 4. KHÔNG thay đổi nhãn \`![IMG-XX]\` (Ví dụ: Giữ nguyên dạng ![IMG-01], không dịch nghĩa, không viết văn bản giải thích trong ngoặc vuông) để hệ thống có thể tự động liên kết dữ liệu ảnh thật từ IndexedDB chính xác.`;
       }
 
-      if (this.customPrompt()) {
-        promptText += `\n- Yêu cầu đặc biệt bổ sung từ người dùng (Hãy chú trọng và thực hiện đúng): ${this.customPrompt()}`;
-      }
-
       promptText += `\n\nĐẦU RA CHỈ ĐƯỢC PHÉP CHỨA ĐOẠN MÃ MARKDOWN NÀY, không viết lời giới thiệu hay bọc dấu markdown \`\`\`markdown ... \`\`\` rườm rà. Bắt đầu mã Markdown ngay dưới đây:`;
 
       // 1. Core text prompt part
@@ -420,29 +415,6 @@ Nhiệm vụ của bạn:
       this.apiError.set(err.message || 'Lỗi gửi yêu cầu AI trực tiếp. Xin kiểm tra lại tính chính xác của khóa API Key!');
     } finally {
       this.isOptimizing.set(false);
-    }
-  }
-
-  /**
-   * Copy code to clipboard
-   */
-  async copyHtmlCode() {
-    const activeHtml = this.activeReflowMode() === 'ai' ? this.aiReflowHtml() : this.clientReflowHtml();
-    try {
-      await navigator.clipboard.writeText(activeHtml);
-      this.showSuccess('Đã sao chép mã nguồn HTML vào khay nhớ tạm!');
-    } catch (e) {
-      this.apiError.set('Không thể truy cập khay nhớ tạm để sao chép.');
-    }
-  }
-
-  async copyMarkdownCode() {
-    const activeMarkdown = this.activeReflowMode() === 'ai' ? this.aiMarkdown() : this.clientMarkdown();
-    try {
-      await navigator.clipboard.writeText(activeMarkdown);
-      this.showSuccess('Đã sao chép mã nguồn Markdown vào khay nhớ tạm!');
-    } catch (e) {
-      this.apiError.set('Không thể truy cập khay nhớ tạm để sao chép.');
     }
   }
 

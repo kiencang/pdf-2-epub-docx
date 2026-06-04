@@ -157,46 +157,19 @@
               </button>
             </div>
 
-            <!-- Configurations Accordion/Card -->
-            <div class="bg-slate-900/40 border border-white/5 rounded-2xl p-4 space-y-4">
-              <div class="flex items-center gap-2 text-xs font-semibold text-slate-300 uppercase tracking-wider font-sans">
-                <mat-icon class="text-slate-400 text-sm">settings_suggest</mat-icon>
-                Cấu hình tối ưu AI
-              </div>
-
-              <!-- Guide explaining default behavior -->
-              <div class="space-y-1.5 p-3 bg-slate-950/40 rounded-xl border border-white/5 font-sans">
-                <span class="text-[11px] text-indigo-400 uppercase block font-semibold">Cơ chế tự động của AI</span>
-                <p class="text-[10px] text-slate-400 leading-relaxed font-sans">
-                  AI sẽ tự động lắp ghép tất cả hình ảnh rời rạc vào chính xác ngữ cảnh phù hợp, sửa các lỗi xuống dòng thô và giữ nguyên vẹn ngôn ngữ gốc của cuốn sách của bạn đảm bảo tiêu chuẩn EPUB 3 cao nhất.
-                </p>
-              </div>
-
-              <!-- Special manual input prompt suggestion -->
-              <div class="space-y-1 font-sans">
-                <span class="text-[11px] text-slate-400 block font-semibold">Yêu cầu đặc biệt bổ sung</span>
-                <textarea 
-                  [value]="customPrompt()"
-                  (input)="customPrompt.set($any($event.target).value)"
-                  placeholder="Ví dụ: Định dạng lại đề mục lục rõ nét hơn, giữ nguyên các thuật ngữ tiếng Anh gốc..."
-                  class="w-full bg-slate-950 border border-white/10 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-indigo-500 transition h-20 resize-none"></textarea>
-              </div>
-
-              <!-- Large triggering action button for Optimization -->
-              <button 
-                (click)="optimizeWithAI()"
-                [disabled]="isOptimizing() || isParsing()"
-                class="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 disabled:from-slate-700 disabled:to-slate-800 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-600/10 hover:shadow-indigo-500/20 transition-all duration-300 flex items-center justify-center gap-2 font-sans">
-                @if (isOptimizing()) {
-                  <mat-icon class="text-sm animate-spin">sync</mat-icon>
-                  Đang tối ưu & ráp nối ảnh...
-                } @else {
-                  <mat-icon class="text-sm">auto_awesome</mat-icon>
-                  Ráp nội dung & Ảnh bằng AI ✨
-                }
-              </button>
-
-            </div>
+            <!-- Large triggering action button for Optimization -->
+            <button 
+              (click)="optimizeWithAI()"
+              [disabled]="isOptimizing() || isParsing()"
+              class="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 disabled:from-slate-700 disabled:to-slate-800 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-600/10 hover:shadow-indigo-500/20 transition-all duration-300 flex items-center justify-center gap-2 font-sans">
+              @if (isOptimizing()) {
+                <mat-icon class="text-sm animate-spin">sync</mat-icon>
+                Đang tối ưu & ráp nối ảnh...
+              } @else {
+                <mat-icon class="text-sm">auto_awesome</mat-icon>
+                Ráp nội dung & Ảnh bằng AI ✨
+              }
+            </button>
 
           </div>
 
@@ -244,8 +217,8 @@
               <button 
                 (click)="downloadEpubFile()"
                 [disabled]="isParsing() || isOptimizing()"
-                class="py-2 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition shadow shadow-emerald-500/10 cursor-pointer focus:outline-none">
-                <mat-icon class="text-[16px] !h-4 !w-4 leading-none">book</mat-icon>
+                class="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition shadow shadow-emerald-500/10 cursor-pointer focus:outline-none">
+                <mat-icon class="text-[16px] !h-4 !w-4 leading-none flex items-center justify-center">book</mat-icon>
                 Xuất file sách EPUB
               </button>
             </div>
@@ -278,29 +251,15 @@
             <!-- Markdown Source Code Viewer -->
             @if (selectedTab() === 'markdown') {
               <div class="w-full max-w-4xl h-full flex flex-col bg-slate-950" id="markdown-source-preview">
-                <div class="flex justify-between items-center mb-4 shrink-0 bg-slate-900/50 p-4 border border-white/5 rounded-2xl font-sans">
-                  <div>
-                    <span class="text-xs font-bold text-slate-200">Mã nguồn sách dạng Markdown (.md)</span>
-                    <span class="block text-[10px] text-slate-400 mt-0.5">Sách lưu chứa trực tiếp tên ảnh IMG-XX cố định (chuẩn không bị dịch dịch thuật)</span>
-                  </div>
-                  <div class="flex gap-2">
-                    <button 
-                      (click)="copyMarkdownCode()" 
-                      class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
-                      <mat-icon class="text-xs">content_copy</mat-icon>
-                      Sao Chép Markdown
-                    </button>
-                    <button 
-                      (click)="downloadMarkdownFile()" 
-                      class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition border border-white/5">
-                      <mat-icon class="text-xs">download</mat-icon>
-                      Tải file .md
-                    </button>
-                  </div>
-                </div>
-                
-                <div class="flex-grow bg-slate-950 border border-white/5 rounded-2xl overflow-y-auto p-4 font-mono text-xs text-indigo-300 leading-relaxed whitespace-pre-wrap select-all">
-                  {{ activeReflowMode() === 'ai' ? aiMarkdown() : clientMarkdown() }}
+                <div class="flex flex-col justify-center items-center h-full shrink-0 bg-slate-900/50 p-6 border border-white/5 rounded-2xl font-sans gap-4 flex-grow">
+                  <mat-icon class="text-slate-500 text-[48px] !h-12 !w-12 mb-2 leading-none">markdown</mat-icon>
+                  <p class="text-sm text-slate-400 text-center max-w-md">Mã Markdown đã được bóc tách và tạo thành công. Bạn có thể tải file Markdown về máy.</p>
+                  <button 
+                    (click)="downloadMarkdownFile()" 
+                    class="px-6 py-3 mt-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold flex items-center gap-2 transition shadow-lg shadow-indigo-500/20">
+                    <mat-icon class="text-[18px] !h-[18px] !w-[18px] leading-none flex items-center justify-center -mt-[1px]">download</mat-icon>
+                    Tải về .md
+                  </button>
                 </div>
               </div>
             }
@@ -351,29 +310,15 @@
             <!-- Source HTML code view -->
             @if (selectedTab() === 'source') {
               <div class="w-full max-w-4xl h-full flex flex-col bg-slate-950" id="html-source-preview">
-                <div class="flex justify-between items-center mb-4 shrink-0 bg-slate-900/50 p-4 border border-white/5 rounded-2xl font-sans">
-                  <div>
-                    <span class="text-xs font-bold text-slate-200">Mã nguồn HTML đã dịch / bóc tách</span>
-                    <span class="block text-[10px] text-slate-400 mt-0.5">Sẵn sàng để dán trực tiếp vào website của bạn</span>
-                  </div>
-                  <div class="flex gap-2">
-                    <button 
-                      (click)="copyHtmlCode()" 
-                      class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
-                      <mat-icon class="text-xs">content_copy</mat-icon>
-                      Sao Chép Mã HTML
-                    </button>
-                    <button 
-                      (click)="downloadHtmlFile()" 
-                      class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition border border-white/5">
-                      <mat-icon class="text-xs">download</mat-icon>
-                      Tải .html
-                    </button>
-                  </div>
-                </div>
-                
-                <div class="flex-grow bg-slate-950 border border-white/5 rounded-2xl overflow-y-auto p-4 font-mono text-xs text-emerald-400 select-all leading-relaxed whitespace-pre-wrap">
-                  {{ activeReflowMode() === 'ai' ? aiReflowHtml() : clientReflowHtml() }}
+                <div class="flex flex-col justify-center items-center h-full shrink-0 bg-slate-900/50 p-6 border border-white/5 rounded-2xl font-sans gap-4 flex-grow">
+                  <mat-icon class="text-slate-500 text-[48px] !h-12 !w-12 mb-2 leading-none">html</mat-icon>
+                  <p class="text-sm text-slate-400 text-center max-w-md">Mã HTML đã được bóc tách và tạo thành công. Bạn có thể tải file HTML về máy.</p>
+                  <button 
+                    (click)="downloadHtmlFile()" 
+                    class="px-6 py-3 mt-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold flex items-center gap-2 transition shadow-lg shadow-indigo-500/20">
+                    <mat-icon class="text-[18px] !h-[18px] !w-[18px] leading-none flex items-center justify-center -mt-[1px]">download</mat-icon>
+                    Tải về .html
+                  </button>
                 </div>
               </div>
             }
@@ -391,7 +336,7 @@
   <footer class="border-t border-white/5 bg-slate-950/60 py-5 px-6 shrink-0 z-10">
     <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-4 text-xs font-sans">
       <div class="flex flex-wrap justify-center items-center gap-2.5 sm:gap-4 text-slate-400">
-        <span class="text-slate-400">v1.0.2</span>
+        <span class="text-slate-400">v1.0.3</span>
         <span class="text-slate-800 font-light text-xs select-none">•</span>
         <a href="https://github.com/kiencang/pdf-2-epub" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors duration-200">GitHub</a>
         <span class="text-slate-800 font-light text-xs select-none">•</span>
