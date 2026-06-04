@@ -8,6 +8,7 @@ và dự án này tuân thủ [Semantic Versioning](https://semver.org/spec/v2.0
 ## [v1.0.6]- 2026-06-04
 ### Fixed
 - Sử dụng thư viện chuẩn (marked) để chuyển đổi markdown thành HTML;
+- Xóa file dư thừa trước đây dùng để chuyển đổi thủ công markdown thành HTML ở chế độ xem trước;
 
 ## [v1.0.5]- 2026-06-04
 ### Fixed
