@@ -1,5 +1,5 @@
 {
-  "name": "PDF-2-EPUB",
+  "name": "Remix: PDF-2-EPUB",
   "description": "Ứng dụng chuyển đổi tệp PDF sang EPUB, trích xuất hình ảnh phía client và tối ưu hóa bố cục thông minh bằng AI.",
   "requestFramePermissions": [],
   "majorCapabilities": [

@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
+import { DomSanitizer } from '@angular/platform-browser';
 import { PdfProcessor, PdfPageData } from './pdf-processor';
 
 @Component({
@@ -22,6 +23,8 @@ import { PdfProcessor, PdfPageData } from './pdf-processor';
 export class App {
   private platformId = inject(PLATFORM_ID);
   private pdfProcessor = inject(PdfProcessor);
+  private sanitizer = inject(DomSanitizer);
+
 
   // Script and loading state
   isScriptLoaded = computed(() => this.pdfProcessor.isScriptLoaded());
@@ -30,10 +33,19 @@ export class App {
   parsingStatus = signal('');
   apiError = signal('');
   successMessage = signal('');
+  optimizationTimer = signal(0);
+  private timerInterval: any = null;
+  optimizationTimeFormatted = computed(() => {
+    const s = this.optimizationTimer();
+    const min = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+  });
 
   // Loaded document details
   fileName = signal('');
   fileSize = signal('');
+  pdfFile = signal<File | null>(null);
   pdfPages = signal<PdfPageData[]>([]);
 
   // Computed fields
@@ -67,6 +79,9 @@ export class App {
   // HTML representations (rendered from Markdown)
   clientReflowHtml = signal('');
   aiReflowHtml = signal('');
+  
+  clientReflowSafeHtml = computed(() => this.sanitizer.bypassSecurityTrustHtml(this.clientReflowHtml()));
+  aiReflowSafeHtml = computed(() => this.sanitizer.bypassSecurityTrustHtml(this.aiReflowHtml()));
 
   // Image Lighbox Modal
   zoomImageUrl = signal<string | null>(null);
@@ -176,12 +191,18 @@ export class App {
       return;
     }
 
+    if (file.size > 50 * 1024 * 1024) {
+      this.apiError.set(`Tài liệu vượt quá giới hạn 50MB (${this.pdfProcessor.formatBytes(file.size)}). Vui lòng chọn tệp nhỏ hơn.`);
+      return;
+    }
+
     const pdfjsLib = this.pdfProcessor.getPdfjsLib();
     this.isParsing.set(true);
     this.apiError.set('');
     this.showSuccess('');
     this.fileName.set(file.name);
     this.fileSize.set(this.pdfProcessor.formatBytes(file.size));
+    this.pdfFile.set(file);
     this.pdfPages.set([]);
     this.clientReflowHtml.set('');
     this.aiReflowHtml.set('');
@@ -203,6 +224,13 @@ export class App {
       this.parsingStatus.set('Đang nạp file vào không gian ảo...');
       const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
       const pdf = await loadingTask.promise;
+
+      if (pdf.numPages > 500) {
+        this.apiError.set(`Tài liệu có ${pdf.numPages} trang, vượt quá giới hạn 500 trang. Vui lòng cắt nhỏ tệp PDF trước khi xử lý.`);
+        this.isParsing.set(false);
+        this.parsingStatus.set('');
+        return;
+      }
 
       const itemsExtracted: PdfPageData[] = [];
 
@@ -296,8 +324,9 @@ export class App {
    * Optimize page text flow through Client-Side Gemini REST API
    */
   async optimizeWithAI() {
-    if (!this.extractedText() || this.extractedText().trim() === '') {
-      this.apiError.set('Không có dữ liệu văn bản để tối ưu. Vui lòng tải lên tài liệu PDF trước.');
+    const file = this.pdfFile();
+    if (!file) {
+      this.apiError.set('Không tìm thấy file nguồn. Vui lòng tải lên tài liệu PDF lại.');
       return;
     }
 
@@ -310,39 +339,83 @@ export class App {
     this.isOptimizing.set(true);
     this.apiError.set('');
     this.showSuccess('');
+    this.optimizationTimer.set(0);
+    this.timerInterval = setInterval(() => {
+      this.optimizationTimer.update(v => v + 1);
+    }, 1000);
 
     try {
       const parts: any[] = [];
+      
+      // Read original PDF as base64
+      const fileReader = new FileReader();
+      const fileBase64Url = await new Promise<string>((resolve, reject) => {
+        fileReader.onload = () => resolve(fileReader.result as string);
+        fileReader.onerror = reject;
+        fileReader.readAsDataURL(file);
+      });
+      const pdfBase64 = fileBase64Url.split(',')[1];
       
       let promptText = '';
       try {
         const response = await fetch('/prompts/reflow_instructions.md');
         if (!response.ok) throw new Error('Không thể tải tệp prompt từ server');
-        const template = await response.text();
-        promptText = template.replace('{{EXTRACTED_TEXT}}', this.extractedText());
+        promptText = await response.text();
       } catch (fetchErr) {
         console.warn('Lỗi fetch prompt template, sử dụng cấu hình mặc định:', fetchErr);
-        promptText = `Bạn là một chuyên gia bóc tách tài liệu và cấu trúc tài liệu sang định dạng Markdown chuẩn chất lượng cao.
-Dưới đây là nội dung văn bản bóc tách thô từ tài liệu PDF:
----
-${this.extractedText()}
----
+        promptText = `Bạn là một Chuyên gia Tiền xử lý Dữ liệu Ngôn ngữ (Language Data Pre-processing Expert) và Kỹ sư OCR tài liệu xuất sắc.
+Nhiệm vụ của bạn là trích xuất văn bản từ tệp PDF đính kèm và chuyển đổi thành định dạng Markdown (MD) chuẩn xác nhất.
 
-Và chúng tôi đính kèm dưới đây là danh sách các hình ảnh thực tế bóc tách được từ tài liệu này.
-Nhiệm vụ của bạn:
-1. Tái cấu trúc lại văn bản nguồn sạch sẽ thành định dạng Markdown chuẩn (sử dụng tiêu đề #, ##, ###, đoạn văn, danh sách - hoặc *, khối trích dẫn > , định dạng in đậm **text**, in nghiêng *text*, khối mã \`\`\` hoặc bảng biểu nếu có).
-2. Tối ưu hóa cấu trúc dàn trang, tạo trải nghiệm đọc sách EPUB 3 mượt mà chuyên nghiệp nhất. Mặc định luôn giữ nguyên ngôn ngữ gốc của nội dung tài liệu.
-3. Quan sát nội dung văn bản gốc và các hình ảnh được truyền vào để nhận diện ngữ cảnh, sau đó chèn chính xác thẻ hình ảnh Markdown, ví dụ: \`![IMG-01]\`, \`![IMG-02]\`,... vào ĐÚNG vị trí tương ứng trong văn bản Markdown mà hình ảnh đó đang diễn tả hoặc minh họa rõ nét.
-   Lưu ý: Bạn không được lược bỏ bất kỳ ảnh nào được truyền vào, hãy sắp xếp tên ảnh đúng thứ tự xuất hiện của nó tương ứng với nội dung bàn luận.
-4. KHÔNG thay đổi nhãn \`![IMG-XX]\` (Ví dụ: Giữ nguyên dạng ![IMG-01], không dịch nghĩa, không viết văn bản giải thích trong ngoặc vuông) để hệ thống có thể tự động liên kết dữ liệu ảnh thật từ IndexedDB chính xác.`;
+[MỤC ĐÍCH TỐI THƯỢNG]: Tệp Markdown này LÀ ĐẦU VÀO CHO HỆ THỐNG DỊCH THUẬT MÁY (Machine Translation) VÀ ĐÓNG GÓI SÁCH ĐIỆN TỬ (EPUB). Do đó, TÍNH LIỀN MẠCH CỦA NGỮ CẢNH (Contextual Continuity), ĐỘ SẠCH của văn bản và BẢO TOÀN VỊ TRÍ ẢNH là ưu tiên số một.
+
+BẠN PHẢI TUÂN THỦ NGHIÊM NGẶT CÁC RÀNG BUỘC SAU:
+
+1. NỐI MẠCH VĂN BẢN (QUAN TRỌNG NHẤT CHO DỊCH THUẬT):
+- XÓA NGẮT DÒNG CỨNG (Hard Line Breaks): Bạn PHẢI tự động nối các câu/dòng thuộc cùng một đoạn văn (paragraph) thành một dải văn bản liên tục trên một dòng Markdown. Chuyển sang dòng mới (Enter) CHỈ KHI thực sự kết thúc một đoạn văn.
+- NỐI CÂU QUA TRANG (Cross-page Merging): Nhận diện các câu bị cắt ngang giữa cuối trang trước và đầu trang sau. Nối chúng lại thành một câu hoàn chỉnh.
+- NGOẠI LỆ: Các đoạn thơ/bài hát (thường có các dòng ngắn, thụt lề, lặp lại cấu trúc) thì PHẢI giữ nguyên ngắt dòng, chỉ nối các đoạn văn xuôi.
+- GOM bố cục nhiều cột (Multi-column) thành MỘT cột: Nếu tài liệu có layout nhiều cột (báo chí, luận văn...), hãy đọc theo đúng luồng tự nhiên (hết cột trái mới sang phải, hoặc tùy ngữ cảnh) và gộp thành MỘT CỘT DUY NHẤT.
+
+2. DỌN DẸP RÁC TÀI LIỆU (NOISE REMOVAL):
+- Bỏ qua hoàn toàn: Header, Footer, Tên sách/Tên chương lặp lại ở lề trang, Số trang (Page numbers), Watermark.
+- Sửa lỗi OCR dựa trên ngữ cảnh của câu.
+- Chuẩn hóa dấu câu: Thống nhất dấu nháy kép thành \`"\` hoặc \`""\`; bảo toàn dấu gạch ngang dài (— em-dash).
+
+3. BẢO TOÀN CẤU TRÚC VÀ ĐỊNH DẠNG:
+- Tiêu đề: Phản ánh đúng cấu trúc phân cấp bằng H1, H2, H3 (#, ##, ###).
+- Nhấn mạnh: Giữ lại in nghiêng (*italic*) và in đậm (**bold**) đối với từ khóa.
+- Danh sách: Dùng \`-\` cho list không thứ tự, \`1.\` cho list có thứ tự.
+- Bảng biểu (Tables): Dùng định dạng bảng Markdown (\`|---|---|\`). Nếu quá phức tạp, gom thành danh sách \`Key: Value\`.
+- Trích dẫn: Dùng \`>\`.
+
+4. XỬ LÝ CHÚ THÍCH (FOOTNOTES/ENDNOTES):
+- Gom nội dung chú thích xuống cuối file Markdown theo định dạng: \`[^1]: Nội dung...\`. Không xen giữa các đoạn.
+
+5. XỬ LÝ VÀ CHÈN HÌNH ẢNH, BIỂU ĐỒ TRỰC QUAN:
+Chúng tôi đính kèm danh sách các hình ảnh thực tế bóc tách được (mang nhãn như \`![IMG-01]\`, \`![IMG-02]\`). 
+- Quan sát tệp PDF đính kèm, nhận diện vị trí xuất hiện của chúng và sau đó CHÈN CHÍNH XÁC thẻ Markdown hình ảnh (VD: \`![IMG-01]\`) vào ĐÚNG vị trí tương ứng trong luồng văn bản (ngay sau hoặc trước đoạn mà hình ảnh minh họa đính kèm)
+- Bạn tuyệt đối KHÔNG ĐƯỢC lược bỏ bất kỳ ảnh nào được truyền vào, hãy sử dụng và sắp xếp tên ảnh đúng theo đối chiếu của bạn ở tài liệu gốc.
+- KHÔNG thay đổi nguyên mẫu nhãn \`![IMG-XX]\` (đừng dịch, đừng thêm Alt text, hãy giữ đúng chuỗi \`![IMG-01]\`) để hệ thống phần mềm phía sau ánh xạ chính xác file ảnh thật.
+
+6. ĐẦU RA ZERO-FLUFF (CHỈ CODE):
+- KHÔNG có bất kỳ lời chào hỏi, dạo đầu hay xin lỗi nào.
+- KHÔNG bọc đầu ra trong khối \`\`\`markdown, mà bắt đầu trả về chuỗi Markdown ngay lập tức.`;
       }
+      
+      promptText += `\n\nNhiệm vụ của bạn là đọc kĩ tệp PDF đính kèm cùng các hình ảnh, sau đó chuyển đổi thành mã Markdown. ĐẦU RA CHỈ ĐƯỢC PHÉP CHỨA ĐOẠN MÃ MARKDOWN NÀY, không viết lời giới thiệu. Bắt đầu mã Markdown ngay dưới đây:`;
 
-      promptText += `\n\nĐẦU RA CHỈ ĐƯỢC PHÉP CHỨA ĐOẠN MÃ MARKDOWN NÀY, không viết lời giới thiệu hay bọc dấu markdown \`\`\`markdown ... \`\`\` rườm rà. Bắt đầu mã Markdown ngay dưới đây:`;
+      // 1. Send the original PDF document
+      parts.push({
+        inlineData: {
+          mimeType: 'application/pdf',
+          data: pdfBase64
+        }
+      });
 
-      // 1. Core text prompt part
+      // 2. Core text prompt part
       parts.push({ text: promptText });
 
-      // 2. Multimodal image structures containing actual base64 payloads to let AI recognize visual contents
+      // 3. Multimodal image structures containing actual base64 payloads to let AI recognize visual contents
       let imageIdx = 1;
       this.pdfPages().forEach(page => {
         if (page.extractedImages) {
@@ -362,8 +435,8 @@ Nhiệm vụ của bạn:
         }
       });
 
-      // Use customized high speed gemini-flash-lite-latest model
-      const modelName = 'gemini-flash-lite-latest';
+      // Use customized high speed gemini-flash-latest model
+      const modelName = 'gemini-flash-latest';
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
       const apiResponse = await fetch(endpoint, {
@@ -412,11 +485,15 @@ Nhiệm vụ của bạn:
       
       this.activeReflowMode.set('ai');
       this.selectedTab.set('reflow');
-      this.showSuccess('Đã bóc tách cấu trúc và liên kết ảnh thành công bằng Mô hình Đa phương thức AI!');
+      this.showSuccess('Đã ráp nội dung & ảnh thành công. Bạn hãy tải file EPUB về.');
     } catch (err: any) {
       console.error(err);
       this.apiError.set(err.message || 'Lỗi gửi yêu cầu AI trực tiếp. Xin kiểm tra lại tính chính xác của khóa API Key!');
     } finally {
+      if (this.timerInterval) {
+        clearInterval(this.timerInterval);
+        this.timerInterval = null;
+      }
       this.isOptimizing.set(false);
     }
   }

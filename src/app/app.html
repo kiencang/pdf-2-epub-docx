@@ -19,7 +19,8 @@
         <button 
           type="button"
           (click)="openApiKeyModal()"
-          class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-full font-medium transition-colors cursor-pointer focus:outline-none">
+          [disabled]="isOptimizing() || isParsing()"
+          class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-full font-medium transition-colors cursor-pointer focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed">
           <span class="h-1.5 w-1.5 bg-emerald-400 rounded-full" [class.animate-pulse]="!clientApiKey()"></span>
           {{ clientApiKey() ? 'Đang dùng Key của bạn' : 'Nhập API Key' }}
         </button>
@@ -83,13 +84,19 @@
             (change)="onFileSelected($event)" 
             class="hidden" />
 
-          <div class="h-28 w-28 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 group-hover:scale-105 group-hover:bg-indigo-500/20 group-hover:text-indigo-300 transition-all duration-300 mb-6 border border-indigo-500/10">
+          <div class="h-28 w-28 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 group-hover:scale-105 group-hover:bg-indigo-500/20 group-hover:text-indigo-300 transition-all duration-300 mb-4 border border-indigo-500/10">
             @if (isParsing()) {
               <mat-icon class="text-4xl w-9 h-9 text-[36px] leading-[36px] animate-spin">sync</mat-icon>
             } @else {
               <mat-icon class="w-16 h-16 text-[64px] leading-[64px]">cloud_upload</mat-icon>
             }
           </div>
+
+          @if (!isParsing()) {
+            <div class="text-[11px] font-sans font-medium text-slate-500 mb-6 text-center">
+              Tối đa: 50MB (không quá 500 trang)
+            </div>
+          }
 
           @if (isParsing()) {
             <h2 class="text-sm font-semibold tracking-tight mb-2 font-sans text-slate-100 text-center leading-snug">
@@ -141,7 +148,7 @@
                   <span class="text-sm font-bold text-slate-200 font-mono">{{ totalPageCount() }}</span>
                 </div>
                 <div class="bg-slate-950/50 rounded-xl p-2.5">
-                  <span class="block text-[10px] text-slate-400 uppercase font-sans">Ảnh bóc được</span>
+                  <span class="block text-[10px] text-slate-400 uppercase font-sans">Ảnh tách được</span>
                   <span class="text-sm font-bold text-slate-200 text-indigo-400 font-mono">{{ extractedImagesCount() }}</span>
                 </div>
               </div>
@@ -149,7 +156,8 @@
               <!-- Reset current PDF -->
               <button 
                 (click)="pdfPages.set([]); clientReflowHtml.set(''); aiReflowHtml.set(''); clientMarkdown.set(''); aiMarkdown.set('');"
-                class="w-full mt-4 flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-white/5 hover:bg-rose-500/10 text-slate-300 hover:text-rose-300 rounded-lg transition border border-white/5 font-sans">
+                [disabled]="isOptimizing() || isParsing()"
+                class="w-full mt-4 flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-white/5 hover:bg-rose-500/10 text-slate-300 hover:text-rose-300 rounded-lg transition border border-white/5 font-sans disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/5 disabled:hover:text-slate-300">
                 <mat-icon class="text-sm">restart_alt</mat-icon>
                 Đổi tài liệu khác
               </button>
@@ -168,6 +176,13 @@
                 Ráp nội dung & Ảnh bằng AI ✨
               }
             </button>
+
+            @if (isOptimizing()) {
+              <div class="mt-3 flex items-center justify-center gap-1.5 text-xs text-indigo-400 font-mono bg-indigo-500/10 py-1.5 px-3 rounded-md animate-pulse">
+                <mat-icon class="text-[14px]">timer</mat-icon>
+                <span>{{ optimizationTimeFormatted() }}</span>
+              </div>
+            }
 
           </div>
 
@@ -244,10 +259,10 @@
                 
                 @if (activeReflowMode() === 'ai' && aiReflowHtml()) {
                   <!-- Render optimized AI output -->
-                  <div class="prose max-w-none text-justify flex flex-col" [innerHTML]="aiReflowHtml()"></div>
+                  <div class="prose max-w-none text-justify flex flex-col" [innerHTML]="aiReflowSafeHtml()"></div>
                 } @else {
                   <!-- Render clean local output -->
-                  <div class="prose max-w-none text-justify flex flex-col animate-fade-in" [innerHTML]="clientReflowHtml()"></div>
+                  <div class="prose max-w-none text-justify flex flex-col animate-fade-in" [innerHTML]="clientReflowSafeHtml()"></div>
                 }
 
               </div>
@@ -347,7 +362,8 @@
           <span class="text-slate-400 font-medium">Dev</span>
           <button type="button" 
                   (click)="isDevMode.set(!isDevMode())" 
-                  class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                  [disabled]="isOptimizing() || isParsing()"
+                  class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   [ngClass]="isDevMode() ? 'bg-indigo-500' : 'bg-slate-700'">
             <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
                   [ngClass]="isDevMode() ? 'translate-x-4' : 'translate-x-0'"></span>
@@ -362,7 +378,7 @@
 
       <!-- Center side: Links -->
       <div class="flex flex-wrap justify-center items-center gap-2.5 sm:gap-4 shrink-0 text-slate-400">
-        <span class="text-slate-400">v1.0.4</span>
+        <span class="text-slate-400">v1.0.5</span>
         <span class="text-slate-800 font-light text-xs select-none">•</span>
         <a href="https://github.com/kiencang/pdf-2-epub" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors duration-200 cursor-pointer">GitHub</a>
         <span class="text-slate-800 font-light text-xs select-none">•</span>
