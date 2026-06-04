@@ -91,13 +91,16 @@ export class ImageExtractor {
         const height = imgObj.height || (imgObj.bitmap && imgObj.bitmap.height) || (imgObj.image && imgObj.image.height) || 0;
 
         if (width > 24 && height > 24) {
-          let stride = 1;
-          while ((width / stride) * (height / stride) > 800 * 800 && stride < 4) {
-            stride++;
-          }
+          // Absolute Hard Cap: Bảo toàn tỷ lệ nhưng khống chế kích cỡ tối đa hai chiều không quá 1024px
+          const MAX_DIMENSION = 1024;
+          let targetWidth = width;
+          let targetHeight = height;
 
-          const targetWidth = Math.floor(width / stride);
-          const targetHeight = Math.floor(height / stride);
+          if (targetWidth > MAX_DIMENSION || targetHeight > MAX_DIMENSION) {
+            const ratio = Math.min(MAX_DIMENSION / targetWidth, MAX_DIMENSION / targetHeight);
+            targetWidth = Math.floor(targetWidth * ratio);
+            targetHeight = Math.floor(targetHeight * ratio);
+          }
 
           const canvas = document.createElement('canvas');
           canvas.width = targetWidth;
@@ -124,84 +127,49 @@ export class ImageExtractor {
             }
           } else if (imgObj.data) {
             try {
-              const imgData = ctx.createImageData(targetWidth, targetHeight);
               const rawData = imgObj.data;
-              const targetData = imgData.data;
+              const numPixels = width * height;
 
-              if (stride === 1) {
-                const numPixels = targetWidth * targetHeight;
-                if (rawData.length === numPixels * 4) {
-                  targetData.set(rawData);
-                } else if (rawData.length === numPixels * 3) {
-                  let src = 0;
-                  let dest = 0;
-                  for (let p = 0; p < numPixels; p++) {
-                    targetData[dest] = rawData[src];
-                    targetData[dest + 1] = rawData[src + 1];
-                    targetData[dest + 2] = rawData[src + 2];
-                    targetData[dest + 3] = 255;
-                    src += 3;
-                    dest += 4;
-                  }
-                } else {
-                  let src = 0;
-                  let dest = 0;
-                  for (let p = 0; p < numPixels; p++) {
-                    const val = rawData[src] !== undefined ? rawData[src] : 128;
-                    targetData[dest] = val;
-                    targetData[dest + 1] = val;
-                    targetData[dest + 2] = val;
-                    targetData[dest + 3] = 255;
-                    src++;
-                    dest += 4;
-                  }
+              // Tái dựng dữ liệu pixel gốc sang canvas đệm để trình duyệt xử lý nội suy (bilinear/bicubic) tự động khi thu nhỏ
+              const tempCanvas = document.createElement('canvas');
+              tempCanvas.width = width;
+              tempCanvas.height = height;
+              const tempCtx = tempCanvas.getContext('2d')!;
+              const tempImgData = tempCtx.createImageData(width, height);
+              const tempTargetData = tempImgData.data;
+
+              if (rawData.length === numPixels * 4) {
+                tempTargetData.set(rawData);
+              } else if (rawData.length === numPixels * 3) {
+                let src = 0;
+                let dest = 0;
+                for (let p = 0; p < numPixels; p++) {
+                  tempTargetData[dest] = rawData[src];
+                  tempTargetData[dest + 1] = rawData[src + 1];
+                  tempTargetData[dest + 2] = rawData[src + 2];
+                  tempTargetData[dest + 3] = 255;
+                  src += 3;
+                  dest += 4;
                 }
               } else {
+                let src = 0;
                 let dest = 0;
-                const isRGBA = rawData.length === width * height * 4;
-                const isRGB = rawData.length === width * height * 3;
-
-                if (isRGBA) {
-                  for (let tr = 0; tr < targetHeight; tr++) {
-                    const origRowStart = tr * stride * width * 4;
-                    for (let tc = 0; tc < targetWidth; tc++) {
-                      const src = origRowStart + (tc * stride * 4);
-                      targetData[dest] = rawData[src];
-                      targetData[dest + 1] = rawData[src + 1];
-                      targetData[dest + 2] = rawData[src + 2];
-                      targetData[dest + 3] = rawData[src + 3];
-                      dest += 4;
-                    }
-                  }
-                } else if (isRGB) {
-                  for (let tr = 0; tr < targetHeight; tr++) {
-                    const origRowStart = tr * stride * width * 3;
-                    for (let tc = 0; tc < targetWidth; tc++) {
-                      const src = origRowStart + (tc * stride * 3);
-                      targetData[dest] = rawData[src];
-                      targetData[dest + 1] = rawData[src + 1];
-                      targetData[dest + 2] = rawData[src + 2];
-                      targetData[dest + 3] = 255;
-                      dest += 4;
-                    }
-                  }
-                } else {
-                  for (let tr = 0; tr < targetHeight; tr++) {
-                    const origRowStart = tr * stride * width;
-                    for (let tc = 0; tc < targetWidth; tc++) {
-                      const src = origRowStart + (tc * stride);
-                      const val = rawData[src] !== undefined ? rawData[src] : 128;
-                      targetData[dest] = val;
-                      targetData[dest + 1] = val;
-                      targetData[dest + 2] = val;
-                      targetData[dest + 3] = 255;
-                      dest += 4;
-                    }
-                  }
+                for (let p = 0; p < numPixels; p++) {
+                  const val = rawData[src] !== undefined ? rawData[src] : 128;
+                  tempTargetData[dest] = val;
+                  tempTargetData[dest + 1] = val;
+                  tempTargetData[dest + 2] = val;
+                  tempTargetData[dest + 3] = 255;
+                  src++;
+                  dest += 4;
                 }
               }
 
-              ctx.putImageData(imgData, 0, 0);
+              tempCtx.putImageData(tempImgData, 0, 0);
+              
+              // Vẽ scaled từ canvas đệm xuống canvas đích
+              ctx.drawImage(tempCanvas, 0, 0, targetWidth, targetHeight);
+
               const dataUrl = canvas.toDataURL('image/png');
               images.push({
                 dataUrl,

@@ -24,11 +24,13 @@ export class EpubExporter {
     pdfPages.forEach(page => {
       if (page.extractedImages) {
         page.extractedImages.forEach((img: any) => {
+          const key = img.labeledKey || `IMG-${String(imgIdx).padStart(2, '0')}`;
+          const safeKey = key.replace(/[^a-zA-Z0-9-_]/g, '');
           allImages.push({
-            id: `img-${String(imgIdx).padStart(2, '0')}`,
-            key: `IMG-${String(imgIdx).padStart(2, '0')}`,
+            id: `img-${safeKey.toLowerCase()}`,
+            key: key,
             dataUrl: img.dataUrl,
-            fileName: `images/IMG-${String(imgIdx).padStart(2, '0')}.png`
+            fileName: `images/${safeKey}.png`
           });
           imgIdx++;
         });

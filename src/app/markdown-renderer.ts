@@ -16,11 +16,16 @@ export class MarkdownRenderer {
       }
     });
 
-    const imageRegex = /!\[(IMG[-_]\d+)\]/gi;
+    const imageRegex = /!\[(IMG[-_]CHUNK\d+[-_]\d+|IMG[-_]\d+)\]/gi;
     const processedMarkdown = markdown.replace(imageRegex, (match, key) => {
-      const indexStr = key.replace(/\D/g, '');
-      const indexVal = parseInt(indexStr, 10) - 1;
-      const img = allImages[indexVal];
+      // Find image by exact labeledKey first (case insensitive)
+      let img = allImages.find(i => i.labeledKey === key || i.labeledKey?.toLowerCase() === key.toLowerCase());
+      if (!img) {
+        // Fallback for legacy simple index
+        const indexStr = key.replace(/\D/g, '');
+        const indexVal = parseInt(indexStr, 10) - 1;
+        img = allImages[indexVal];
+      }
       if (img) {
         return `\n<div class="my-8 border border-slate-100 rounded-3xl overflow-hidden shadow-sm bg-white p-3 max-w-2xl mx-auto-fluid no-print">
   <div class="relative bg-slate-50 rounded-2xl overflow-hidden flex items-center justify-center max-h-[30rem] p-3">
@@ -70,10 +75,10 @@ export class MarkdownRenderer {
   static markdownToXhtml(markdown: string): string {
     if (!markdown) return '';
 
-    const imageRegex = /!\[(IMG[-_]\d+)\]/gi;
+    const imageRegex = /!\[(IMG[-_]CHUNK\d+[-_]\d+|IMG[-_]\d+)\]/gi;
     const processedMarkdown = markdown.replace(imageRegex, (match, key) => {
-      const indexStr = key.replace(/\D/g, '');
-      const imgFileName = `images/IMG-${indexStr.padStart(2, '0')}.png`;
+      const safeKey = key.replace(/[^a-zA-Z0-9-_]/g, '');
+      const imgFileName = `images/${safeKey}.png`;
       return `![${key}](${imgFileName})`;
     });
 

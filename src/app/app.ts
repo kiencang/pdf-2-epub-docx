@@ -6,12 +6,25 @@ import {
   inject,
   afterNextRender,
   signal,
-  computed
+  computed,
+  effect
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import { PdfProcessor, PdfPageData } from './pdf-processor';
+
+export interface PdfChunk {
+  id: string;
+  index: number;
+  startPageNum: number;
+  endPageNum: number;
+  pages: PdfPageData[];
+  status: 'pending' | 'processing' | 'completed' | 'error';
+  errorMessage: string;
+  markdownContent: string;
+  reflowHtml: string;
+}
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,6 +43,9 @@ export class App {
   isScriptLoaded = computed(() => this.pdfProcessor.isScriptLoaded());
   isParsing = signal(false);
   isOptimizing = signal(false);
+  isBatchProcessing = signal(false);
+  shouldStopBatch = signal(false);
+  selectedModel = signal<'gemini-flash-latest' | 'gemini-flash-lite-latest'>('gemini-flash-lite-latest');
   parsingStatus = signal('');
   apiError = signal('');
   successMessage = signal('');
@@ -47,6 +63,16 @@ export class App {
   fileSize = signal('');
   pdfFile = signal<File | null>(null);
   pdfPages = signal<PdfPageData[]>([]);
+  
+  pdfChunks = signal<PdfChunk[]>([]);
+  selectedChunkIndex = signal<number>(0);
+  
+  activeChunk = computed(() => {
+    const chunks = this.pdfChunks();
+    const idx = this.selectedChunkIndex();
+    if (chunks && chunks.length > idx) return chunks[idx];
+    return null;
+  });
 
   // Computed fields
   totalPageCount = computed(() => this.pdfPages().length);
@@ -65,6 +91,7 @@ export class App {
   isDevMode = signal(false);
   tempApiKey = signal('');
   private successTimeout: any = null;
+  private errorTimeout: any = null;
   selectedTab = signal<'reflow' | 'pdf' | 'source' | 'markdown'>('reflow');
   themeStyle = signal<'clean' | 'warm' | 'mono'>('clean');
 
@@ -72,10 +99,10 @@ export class App {
   clientApiKey = signal('');
 
   // Markdown representations
-  markdownContent = signal('');
+  markdownContent = computed(() => this.activeChunk()?.markdownContent || '');
 
   // HTML representations (rendered from Markdown)
-  reflowHtml = signal('');
+  reflowHtml = computed(() => this.activeChunk()?.reflowHtml || '');
   
   reflowSafeHtml = computed(() => this.sanitizer.bypassSecurityTrustHtml(this.reflowHtml()));
 
@@ -84,6 +111,18 @@ export class App {
   showInstruction = signal(false);
 
   constructor() {
+    effect(() => {
+      const err = this.apiError();
+      if (err) {
+        if (this.errorTimeout) {
+          clearTimeout(this.errorTimeout);
+        }
+        this.errorTimeout = setTimeout(() => {
+          this.apiError.set('');
+        }, 12000);
+      }
+    });
+
     afterNextRender(() => {
       this.loadPdfEngine();
       
@@ -200,8 +239,8 @@ export class App {
     this.fileSize.set(this.pdfProcessor.formatBytes(file.size));
     this.pdfFile.set(file);
     this.pdfPages.set([]);
-    this.reflowHtml.set('');
-    this.markdownContent.set('');
+    this.pdfChunks.set([]);
+    this.selectedChunkIndex.set(0);
 
     try {
       this.parsingStatus.set('Đang dọn dẹp bộ nhớ ảnh cũ trong IndexedDB...');
@@ -267,29 +306,67 @@ export class App {
       }
 
       this.pdfPages.set(itemsExtracted);
+      
+      const createChunks = (pages: PdfPageData[]): PdfChunk[] => {
+        const chunks: PdfChunk[] = [];
+        const divide = (p: PdfPageData[]) => {
+          if (p.length <= 25) {
+             if (p.length > 0) {
+                chunks.push({
+                  id: '',
+                  index: chunks.length,
+                  startPageNum: p[0].pageNum,
+                  endPageNum: p[p.length - 1].pageNum,
+                  pages: p,
+                  status: 'pending',
+                  errorMessage: '',
+                  markdownContent: '',
+                  reflowHtml: ''
+                });
+             }
+             return;
+          }
+          const mid = Math.floor(p.length / 2);
+          divide(p.slice(0, mid));
+          divide(p.slice(mid));
+        };
+        divide(pages);
+        return chunks;
+      };
+      
+      const generatedChunks = createChunks(itemsExtracted);
+
       this.parsingStatus.set('Đang đặt gán nhãn ảnh và lưu vào cơ sở dữ liệu IndexedDB trình duyệt...');
       
-      // Save images sequentially to IndexedDB with IMG-XX keys
-      let globalImageIdx = 1;
-      for (const page of itemsExtracted) {
-        if (page.extractedImages) {
-          for (const img of page.extractedImages) {
-            const labelKey = `IMG-${String(globalImageIdx).padStart(2, '0')}`;
-            img.labeledKey = labelKey; // Assign sequential label
-            
-            await this.pdfProcessor.saveImageToDb({
-              id: `${file.name}_${labelKey}`,
-              key: labelKey,
-              fileName: file.name,
-              pageNum: page.pageNum,
-              dataUrl: img.dataUrl,
-              width: img.width,
-              height: img.height
-            });
-            globalImageIdx++;
+      // Save images sequentially to IndexedDB with IMG-CHUNKXX-XX keys
+      let chunkCounter = 1;
+      for (const chunk of generatedChunks) {
+        chunk.id = `Phần ${chunkCounter}`;
+        
+        let imageIdxInChunk = 1;
+        for (const page of chunk.pages) {
+          if (page.extractedImages) {
+            for (const img of page.extractedImages) {
+              const labelKey = `IMG-CHUNK${chunkCounter}-${String(imageIdxInChunk).padStart(2, '0')}`;
+              img.labeledKey = labelKey; // Assign sequential label
+              
+              await this.pdfProcessor.saveImageToDb({
+                id: `${file.name}_${labelKey}`,
+                key: labelKey,
+                fileName: file.name,
+                pageNum: page.pageNum,
+                dataUrl: img.dataUrl,
+                width: img.width,
+                height: img.height
+              });
+              imageIdxInChunk++;
+            }
           }
         }
+        chunkCounter++;
       }
+
+      this.pdfChunks.set(generatedChunks);
 
       this.parsingStatus.set('Đang thiết lập bản gốc...');
 
@@ -306,49 +383,48 @@ export class App {
   }
 
   /**
-   * Optimize page text flow through Client-Side Gemini REST API
+   * Core function to perform text/image reflow optimization on a specific chunk
    */
-  async optimizeWithAI() {
+  private async executeChunkOptimization(chunkIndex: number): Promise<void> {
     const file = this.pdfFile();
-    if (!file) {
-      this.apiError.set('Không tìm thấy file nguồn. Vui lòng tải lên tài liệu PDF lại.');
-      return;
+    const chunks = this.pdfChunks();
+    const chunk = chunks[chunkIndex];
+
+    if (!file || !chunk) {
+      throw new Error('Không tìm thấy file nguồn hoặc phần phân chia.');
     }
 
     const apiKey = this.clientApiKey().trim();
     if (!apiKey) {
-      this.apiError.set('Vui lòng điền Gemini API Key của bạn ở mục *Nhập API Key* nằm ở phía trên bên phải.');
-      return;
+      throw new Error('Vui lòng cấu hình Gemini API Key trước khi thực hiện.');
     }
 
-    this.isOptimizing.set(true);
-    this.apiError.set('');
-    this.showSuccess('');
-    this.optimizationTimer.set(0);
-    this.timerInterval = setInterval(() => {
-      this.optimizationTimer.update(v => v + 1);
-    }, 1000);
+    // update state in chunks to processing
+    this.pdfChunks.update(cs => {
+       const newCs = [...cs];
+       newCs[chunkIndex] = { ...newCs[chunkIndex], status: 'processing', errorMessage: '' };
+       return newCs;
+    });
 
+    const parts: any[] = [];
+    
+    // Read original PDF as base64
+    const fileReader = new FileReader();
+    const fileBase64Url = await new Promise<string>((resolve, reject) => {
+      fileReader.onload = () => resolve(fileReader.result as string);
+      fileReader.onerror = reject;
+      fileReader.readAsDataURL(file);
+    });
+    const pdfBase64 = fileBase64Url.split(',')[1];
+    
+    let promptText = '';
     try {
-      const parts: any[] = [];
-      
-      // Read original PDF as base64
-      const fileReader = new FileReader();
-      const fileBase64Url = await new Promise<string>((resolve, reject) => {
-        fileReader.onload = () => resolve(fileReader.result as string);
-        fileReader.onerror = reject;
-        fileReader.readAsDataURL(file);
-      });
-      const pdfBase64 = fileBase64Url.split(',')[1];
-      
-      let promptText = '';
-      try {
-        const response = await fetch('/prompts/reflow_instructions.md');
-        if (!response.ok) throw new Error('Không thể tải tệp prompt từ server');
-        promptText = await response.text();
-      } catch (fetchErr) {
-        console.warn('Lỗi fetch prompt template, sử dụng cấu hình mặc định:', fetchErr);
-        promptText = `Bạn là một Chuyên gia Tiền xử lý Dữ liệu Ngôn ngữ (Language Data Pre-processing Expert) và Kỹ sư OCR tài liệu xuất sắc.
+      const response = await fetch('/prompts/reflow_instructions.md');
+      if (!response.ok) throw new Error('Không thể tải tệp prompt từ server');
+      promptText = await response.text();
+    } catch (fetchErr) {
+      console.warn('Lỗi fetch prompt template, sử dụng cấu hình mặc định:', fetchErr);
+      promptText = `Bạn là một Chuyên gia Tiền xử lý Dữ liệu Ngôn ngữ (Language Data Pre-processing Expert) và Kỹ sư OCR tài liệu xuất sắc.
 Nhiệm vụ của bạn là trích xuất văn bản từ tệp PDF đính kèm và chuyển đổi thành định dạng Markdown (MD) chuẩn xác nhất.
 
 [MỤC ĐÍCH TỐI THƯỢNG]: Tệp Markdown này LÀ ĐẦU VÀO CHO HỆ THỐNG DỊCH THUẬT MÁY (Machine Translation) VÀ ĐÓNG GÓI SÁCH ĐIỆN TỬ (EPUB). Do đó, TÍNH LIỀN MẠCH CỦA NGỮ CẢNH (Contextual Continuity), ĐỘ SẠCH của văn bản và BẢO TOÀN VỊ TRÍ ẢNH là ưu tiên số một.
@@ -385,94 +461,141 @@ Chúng tôi đính kèm danh sách các hình ảnh thực tế bóc tách đư�
 6. ĐẦU RA ZERO-FLUFF (CHỈ CODE):
 - KHÔNG có bất kỳ lời chào hỏi, dạo đầu hay xin lỗi nào.
 - KHÔNG bọc đầu ra trong khối \`\`\`markdown, mà bắt đầu trả về chuỗi Markdown ngay lập tức.`;
+    }
+    
+    promptText += `\n\nCHÚ Ý ĐẶC BIỆT: \nCHỈ TRÍCH XUẤT VÀ XỬ LÝ NỘI DUNG TỪ PHẠM VI TRANG **${chunk.startPageNum}** ĐẾN TRANG **${chunk.endPageNum}** CỦA TÀI LIỆU PDF ĐÍNH KÈM VÀ BỎ QUA HOÀN TOÀN CÁC TRANG KHÁC.\n\nNhiệm vụ của bạn là đọc kĩ tệp PDF đính kèm cùng các hình ảnh, sau đó chuyển đổi thành mã Markdown. ĐẦU RA CHỈ ĐƯỢC PHÉP CHỨA ĐOẠN MÃ MARKDOWN NÀY, không viết lời giới thiệu. Bắt đầu mã Markdown ngay dưới đây:`;
+
+    // 1. Send the original PDF document
+    parts.push({
+      inlineData: {
+        mimeType: 'application/pdf',
+        data: pdfBase64
       }
-      
-      promptText += `\n\nNhiệm vụ của bạn là đọc kĩ tệp PDF đính kèm cùng các hình ảnh, sau đó chuyển đổi thành mã Markdown. ĐẦU RA CHỈ ĐƯỢC PHÉP CHỨA ĐOẠN MÃ MARKDOWN NÀY, không viết lời giới thiệu. Bắt đầu mã Markdown ngay dưới đây:`;
+    });
 
-      // 1. Send the original PDF document
-      parts.push({
-        inlineData: {
-          mimeType: 'application/pdf',
-          data: pdfBase64
-        }
-      });
+    // 2. Core text prompt part
+    parts.push({ text: promptText });
 
-      // 2. Core text prompt part
-      parts.push({ text: promptText });
-
-      // 3. Multimodal image structures containing actual base64 payloads to let AI recognize visual contents
-      let imageIdx = 1;
-      this.pdfPages().forEach(page => {
-        if (page.extractedImages) {
-          page.extractedImages.forEach(img => {
-            const rawBase64 = img.dataUrl.split(',')[1];
-            parts.push({
-              text: `\nDưới đây là dữ liệu hình ảnh bóc được mang nhãn [IMG-${String(imageIdx).padStart(2, '0')}]:\n`
-            });
-            parts.push({
-              inlineData: {
-                mimeType: 'image/png',
-                data: rawBase64
-              }
-            });
-            imageIdx++;
+    // 3. Multimodal image structures containing actual base64 payloads to let AI recognize visual contents
+    chunk.pages.forEach(page => {
+      if (page.extractedImages) {
+        page.extractedImages.forEach(img => {
+          const rawBase64 = img.dataUrl.split(',')[1];
+          parts.push({
+            text: `\nDưới đây là dữ liệu hình ảnh bóc được mang nhãn [${img.labeledKey}]:\n`
           });
-        }
-      });
-
-      // Use customized high speed gemini-flash-latest model
-      const modelName = 'gemini-flash-latest';
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(apiKey)}`;
-
-      const apiResponse = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: parts
+          parts.push({
+            inlineData: {
+              mimeType: 'image/png',
+              data: rawBase64
             }
-          ],
-          generationConfig: {
-            temperature: 0.15
+          });
+        });
+      }
+    });
+
+    // Use selected model dynamically (gemini-flash-latest or gemini-flash-lite-latest)
+    const modelName = this.selectedModel();
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+    const apiResponse = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: parts
           }
-        })
-      });
-
-      if (!apiResponse.ok) {
-        const errorData = await apiResponse.json().catch(() => ({}));
-        const originalError = errorData?.error?.message || `Lỗi HTTP ${apiResponse.status}`;
-        throw new Error(`Google API phản hồi thất bại: ${originalError}`);
-      }
-
-      const resData = await apiResponse.json();
-      let rawMarkdown = resData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-      if (!rawMarkdown) {
-        throw new Error('Gemini API không phản hồi dữ liệu văn bản hợp lệ.');
-      }
-
-      // Strip markdown block wrapping if present
-      if (rawMarkdown.includes('```')) {
-        const match = rawMarkdown.match(/```(?:markdown)?([\s\S]*?)```/i);
-        if (match && match[1]) {
-          rawMarkdown = match[1].trim();
+        ],
+        generationConfig: {
+          temperature: 0.15
         }
-      }
+      })
+    });
 
-      this.markdownContent.set(rawMarkdown);
-      
-      // Parse output Markdown to HTML preview
-      const renderedHtml = this.pdfProcessor.renderMarkdownToHtml(rawMarkdown, this.pdfPages());
-      this.reflowHtml.set(renderedHtml);
-      
+    if (!apiResponse.ok) {
+      const errorData = await apiResponse.json().catch(() => ({}));
+      const originalError = errorData?.error?.message || `Lỗi HTTP ${apiResponse.status}`;
+      throw new Error(`Google API phản hồi thất bại: ${originalError}`);
+    }
+
+    const resData = await apiResponse.json();
+    let rawMarkdown = resData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    if (!rawMarkdown) {
+      throw new Error('Gemini API không phản hồi dữ liệu văn bản hợp lệ.');
+    }
+
+    // Strip markdown block wrapping if present
+    if (rawMarkdown.includes('```')) {
+      const match = rawMarkdown.match(/```(?:markdown)?([\s\S]*?)```/i);
+      if (match && match[1]) {
+        rawMarkdown = match[1].trim();
+      }
+    }
+
+    // Parse output Markdown to HTML preview
+    const renderedHtml = this.pdfProcessor.renderMarkdownToHtml(rawMarkdown, chunk.pages);
+    
+    this.pdfChunks.update(cs => {
+      const newCs = [...cs];
+      newCs[chunkIndex] = { 
+        ...newCs[chunkIndex], 
+        status: 'completed', 
+        markdownContent: rawMarkdown,
+        reflowHtml: renderedHtml
+      };
+      return newCs;
+    });
+  }
+
+  /**
+   * Optimize page text flow through Client-Side Gemini REST API
+   */
+  async optimizeChunkWithAI(chunkIndex: number) {
+    const file = this.pdfFile();
+    const chunks = this.pdfChunks();
+    const chunk = chunks[chunkIndex];
+
+    if (!file || !chunk) {
+      this.apiError.set('Không tìm thấy file nguồn hoặc phần phân chia.');
+      return;
+    }
+
+    const apiKey = this.clientApiKey().trim();
+    if (!apiKey) {
+      this.apiError.set('Vui lòng điền Gemini API Key của bạn ở mục *Nhập API Key* nằm ở phía trên bên phải.');
+      return;
+    }
+
+    this.selectedChunkIndex.set(chunkIndex); // Update view to current processing chunk
+
+    this.isOptimizing.set(true);
+    this.apiError.set('');
+    this.showSuccess('');
+    this.optimizationTimer.set(0);
+    this.timerInterval = setInterval(() => {
+      this.optimizationTimer.update(v => v + 1);
+    }, 1000);
+
+    try {
+      await this.executeChunkOptimization(chunkIndex);
       this.selectedTab.set('reflow');
-      this.showSuccess('Đã ráp nội dung & ảnh thành công. Bạn hãy tải file EPUB về.');
+      this.showSuccess(`Đã ráp nối thành công dữ liệu cho ${chunk.id}.`);
     } catch (err: any) {
       console.error(err);
       this.apiError.set(err.message || 'Lỗi gửi yêu cầu AI trực tiếp. Xin kiểm tra lại tính chính xác của khóa API Key!');
+      this.pdfChunks.update(cs => {
+        const newCs = [...cs];
+        newCs[chunkIndex] = { 
+          ...newCs[chunkIndex], 
+          status: 'error', 
+          errorMessage: err.message || 'Lỗi xử lý'
+        };
+        return newCs;
+      });
     } finally {
       if (this.timerInterval) {
         clearInterval(this.timerInterval);
@@ -483,10 +606,118 @@ Chúng tôi đính kèm danh sách các hình ảnh thực tế bóc tách đư�
   }
 
   /**
+   * Process all pending or error chunks in batches of 2 in parallel
+   */
+  async startBatchProcessing() {
+    const file = this.pdfFile();
+    if (!file) {
+      this.apiError.set('Vui lòng chọn hoặc kéo thả tài liệu trước khi xử lý.');
+      return;
+    }
+
+    const apiKey = this.clientApiKey().trim();
+    if (!apiKey) {
+      this.apiError.set('Vui lòng điền Gemini API Key của bạn ở mục *Nhập API Key* nằm ở phía trên bên phải.');
+      return;
+    }
+
+    const chunks = this.pdfChunks();
+    const pendingIndices = chunks
+      .map((c, idx) => ({ status: c.status, idx }))
+      .filter(item => item.status !== 'completed')
+      .map(item => item.idx);
+
+    if (pendingIndices.length === 0) {
+      this.showSuccess('Tất cả các khối đã hoàn thành xử lý!');
+      return;
+    }
+
+    this.isBatchProcessing.set(true);
+    this.shouldStopBatch.set(false);
+    this.isOptimizing.set(true);
+    this.apiError.set('');
+    this.showSuccess('');
+
+    // Setup global timer for batch
+    if (!this.timerInterval) {
+      this.optimizationTimer.set(0);
+      this.timerInterval = setInterval(() => {
+        this.optimizationTimer.update(v => v + 1);
+      }, 1000);
+    }
+
+    try {
+      for (let i = 0; i < pendingIndices.length; i += 2) {
+        if (this.shouldStopBatch()) {
+          this.showSuccess('Đã nhận lệnh dừng. Các khối còn lại tạm dừng.');
+          break;
+        }
+
+        const batch = pendingIndices.slice(i, i + 2);
+        // Process this batch of up to 2 items in parallel
+        await Promise.all(batch.map(idx => this.processSingleChunkForBatch(idx)));
+      }
+      
+      const updatedChunks = this.pdfChunks();
+      const allDoneNow = updatedChunks.every(c => c.status === 'completed');
+      if (allDoneNow && !this.shouldStopBatch()) {
+        this.showSuccess('Hoàn thành xử lý tất cả các phần thành công!');
+        this.selectedTab.set('reflow');
+      }
+    } catch (err: any) {
+      console.error(err);
+      this.apiError.set('Có lỗi xảy ra trong quá trình xử lý hàng loạt: ' + (err.message || err));
+    } finally {
+      this.isBatchProcessing.set(false);
+      this.isOptimizing.set(false);
+      if (this.timerInterval) {
+        clearInterval(this.timerInterval);
+        this.timerInterval = null;
+      }
+    }
+  }
+
+  /**
+   * Request to stop batch processing after early finish of active batch
+   */
+  stopBatchProcessing() {
+    if (this.isBatchProcessing()) {
+      this.shouldStopBatch.set(true);
+      this.showSuccess('Đang yêu cầu dừng lại... Vui lòng chờ các phần đang chạy nốt.');
+    }
+  }
+
+  private async processSingleChunkForBatch(chunkIndex: number): Promise<void> {
+    try {
+      // Pre-select current processing item for visibility
+      this.selectedChunkIndex.set(chunkIndex);
+      await this.executeChunkOptimization(chunkIndex);
+    } catch (err: any) {
+      console.error(err);
+      this.pdfChunks.update(cs => {
+        const newCs = [...cs];
+        newCs[chunkIndex] = { 
+          ...newCs[chunkIndex], 
+          status: 'error', 
+          errorMessage: err.message || 'Lỗi xử lý'
+        };
+        return newCs;
+      });
+    }
+  }
+
+  /**
    * Triggers download of strict EPUB zip standard package
    */
   async downloadEpubFile() {
-    const activeMarkdown = this.markdownContent();
+    const chunks = this.pdfChunks();
+    const isAllCompleted = chunks.length > 0 && chunks.every(c => c.status === 'completed');
+    if (!isAllCompleted) {
+      this.apiError.set('Vui lòng hoàn thành xử lý AI trên tất cả các khối trước khi tải file EPUB tổng.');
+      return;
+    }
+
+    const activeMarkdown = chunks.map(c => c.markdownContent).join('\n\n');
     if (!activeMarkdown || activeMarkdown.trim() === '') {
       this.apiError.set('Không có dữ liệu văn bản để chuyển đổi thành EPUB.');
       return;
@@ -520,7 +751,13 @@ Chúng tôi đính kèm danh sách các hình ảnh thực tế bóc tách đư�
    * Download original clean .md Markdown file
    */
   downloadMarkdownFile() {
-    const activeMarkdown = this.markdownContent();
+    const chunks = this.pdfChunks();
+    const isAllCompleted = chunks.length > 0 && chunks.every(c => c.status === 'completed');
+    if (!isAllCompleted) {
+      this.apiError.set('Vui lòng hoàn thành xử lý AI trên tất cả các khối trước.');
+      return;
+    }
+    const activeMarkdown = chunks.map(c => c.markdownContent).join('\n\n');
     if (!activeMarkdown || activeMarkdown.trim() === '') {
       this.apiError.set('Không có dữ liệu Markdown để tải.');
       return;
@@ -543,7 +780,13 @@ Chúng tôi đính kèm danh sách các hình ảnh thực tế bóc tách đư�
    * Triggers file download of self-contained file
    */
   downloadHtmlFile() {
-    const activeHtml = this.reflowHtml();
+    const chunks = this.pdfChunks();
+    const isAllCompleted = chunks.length > 0 && chunks.every(c => c.status === 'completed');
+    if (!isAllCompleted) {
+      this.apiError.set('Vui lòng hoàn thành xử lý AI trên tất cả các khối trước.');
+      return;
+    }
+    const activeHtml = chunks.map(c => c.reflowHtml).join('<hr class="my-8 border-slate-200" />');
     
     let fontClass = 'font-sans';
     if (this.themeStyle() === 'mono') fontClass = 'font-mono';
@@ -591,6 +834,6 @@ Chúng tôi đính kèm danh sách các hình ảnh thực tế bóc tách đư�
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    this.showSuccess('Đã bắt đầu tải trang HTML tự chứa hình ảnh!');
+    this.showSuccess('Đã tải trang HTML thành công.');
   }
 }
