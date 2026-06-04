@@ -35,25 +35,25 @@
   <!-- Toast notifications -->
   <div class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 items-end pointer-events-none">
     @if (apiError()) {
-      <div class="pointer-events-auto bg-slate-900 border border-rose-500/30 text-rose-300 px-4 py-3 rounded-xl shadow-2xl flex items-center justify-between gap-4 animate-fade-in max-w-sm">
-        <div class="flex items-center gap-2">
-          <mat-icon class="text-rose-400">error_outline</mat-icon>
-          <span class="font-sans text-sm">{{ apiError() }}</span>
+      <div class="pointer-events-auto bg-slate-900 border border-rose-500/30 text-rose-300 px-4 py-3 rounded-xl shadow-2xl flex items-start justify-between gap-4 animate-fade-in max-w-sm pt-3.5">
+        <div class="flex items-start gap-2.5">
+          <mat-icon class="text-rose-400 shrink-0 text-[20px] w-5 h-5 leading-[20px]">error_outline</mat-icon>
+          <span class="font-sans text-sm leading-snug">{{ apiError() }}</span>
         </div>
         <button (click)="apiError.set('')" class="text-rose-300 hover:text-white shrink-0 outline-none">
-          <mat-icon class="text-sm">close</mat-icon>
+          <mat-icon class="text-[18px] w-[18px] h-[18px] leading-[18px] flex">close</mat-icon>
         </button>
       </div>
     }
 
     @if (successMessage()) {
-      <div class="pointer-events-auto bg-slate-900 border border-emerald-500/30 text-emerald-300 px-4 py-3 rounded-xl shadow-2xl flex items-center justify-between gap-4 animate-fade-in max-w-sm">
-        <div class="flex items-center gap-2">
-          <mat-icon class="text-emerald-400">check_circle_outline</mat-icon>
-          <span class="font-sans text-sm">{{ successMessage() }}</span>
+      <div class="pointer-events-auto bg-slate-900 border border-emerald-500/30 text-emerald-300 px-4 py-3 rounded-xl shadow-2xl flex items-start justify-between gap-4 animate-fade-in max-w-sm pt-3.5">
+        <div class="flex items-start gap-2.5">
+          <mat-icon class="text-emerald-400 shrink-0 text-[20px] w-5 h-5 leading-[20px]">check_circle_outline</mat-icon>
+          <span class="font-sans text-sm leading-snug">{{ successMessage() }}</span>
         </div>
         <button (click)="showSuccess('')" class="text-emerald-300 hover:text-white shrink-0 outline-none">
-          <mat-icon class="text-sm">close</mat-icon>
+          <mat-icon class="text-[18px] w-[18px] h-[18px] leading-[18px] flex">close</mat-icon>
         </button>
       </div>
     }
@@ -91,23 +91,23 @@
             }
           </div>
 
-          <h2 class="text-xl font-bold tracking-tight mb-2 font-sans text-slate-100">
+          <h2 class="text-sm font-semibold tracking-tight mb-2 font-sans text-slate-100 text-center leading-snug">
             @if (isParsing()) {
               Đang phân tích cú pháp dữ liệu...
             } @else {
-              Kéo thả tệp PDF vào đây
+              Kéo thả tệp PDF vào đây hoặc Bấm vào để duyệt tệp tin từ máy vi tính.
             }
           </h2>
-          <p class="text-sm text-slate-400 mb-6 max-w-sm font-sans">
+          <p class="text-sm text-slate-400 mb-6 max-w-sm font-sans text-center leading-relaxed">
             @if (isParsing()) {
               {{ parsingStatus() || 'Hệ thống đang cấu trúc thông tin' }}
             } @else {
-              Hoặc bấm vào để duyệt tệp tin từ máy vi tính. Ứng dụng sẽ tự động tách rời hình ảnh, tải lên IndexedDB và lưu trữ an toàn.
+              Ứng dụng sẽ tự động trích xuất hình ảnh, rồi chuyển tài liệu thành <strong>định dạng EPUB</strong> tiêu chuẩn.
             }
           </p>
 
           @if (!isParsing()) {
-            <span class="px-5 py-2.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 rounded-xl transition shadow-lg shadow-indigo-600/10 font-sans text-white">
+            <span class="px-6 py-2.5 text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 rounded-lg transition shadow-lg shadow-indigo-600/10 font-sans text-white">
               Chọn tệp tin PDF
             </span>
           } @else {
@@ -199,33 +199,7 @@
 
           </div>
 
-          <!-- Bottom: Action bar for exports -->
-          <div class="pt-4 border-t border-white/5 space-y-3 font-sans">
-            <div class="text-[10px] text-slate-500 font-mono tracking-widest uppercase block mb-1">Xuất bản sách & tài liệu</div>
-            
-            <button 
-              (click)="downloadEpubFile()"
-              [disabled]="isParsing() || isOptimizing()"
-              class="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition shadow shadow-emerald-500/10 cursor-pointer">
-              <mat-icon class="text-sm">book</mat-icon>
-              XUẤT FILE SÁCH EPUB (.epub)
-            </button>
 
-            <div class="grid grid-cols-2 gap-2">
-              <button 
-                (click)="downloadMarkdownFile()"
-                class="py-2.5 px-2 bg-slate-900 hover:bg-slate-850 text-slate-200 text-xs font-semibold rounded-xl border border-white/5 flex items-center justify-center gap-1 transition">
-                <mat-icon class="text-[14px]">download</mat-icon>
-                Lưu .md
-              </button>
-              <button 
-                (click)="downloadHtmlFile()"
-                class="py-2.5 px-2 bg-slate-900 hover:bg-slate-850 text-slate-200 text-xs font-semibold rounded-xl border border-white/5 flex items-center justify-center gap-1 transition">
-                <mat-icon class="text-[14px]">html</mat-icon>
-                Lưu .html
-              </button>
-            </div>
-          </div>
         </aside>
 
         <!-- Right Panel: Tabs, Workspace Preview and Live Editor -->
@@ -264,31 +238,16 @@
               </button>
             </div>
 
-            <!-- Tab settings context variables (Themes / Styles) -->
-            @if (selectedTab() === 'reflow') {
-              <div class="flex items-center gap-4 text-xs font-sans">
-                
-                <!-- Toggle Mode: Client/Gemini -->
-                <div class="flex items-center gap-1 bg-slate-900 border border-white/5 rounded-xl p-1 shrink-0">
-                  <button 
-                    (click)="activeReflowMode.set('client')"
-                    class="px-3 py-1.5 rounded-lg text-[11px] font-semibold transition"
-                    [ngClass]="activeReflowMode() === 'client' ? 'bg-slate-800 text-indigo-400 font-bold' : 'text-slate-400 hover:text-slate-250'">
-                    Client-Side
-                  </button>
-                  <button 
-                    (click)="activeReflowMode.set('ai')"
-                    [disabled]="!aiMarkdown()"
-                    class="px-3 py-1.5 rounded-lg text-[11px] font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                    [ngClass]="activeReflowMode() === 'ai' ? 'bg-slate-800 text-emerald-400 font-bold' : 'text-slate-400 hover:text-slate-250'">
-                    AI Optimized ✨
-                  </button>
-                </div>
-
-
-
-              </div>
-            }
+            <!-- Action Bar: Export EPUB -->
+            <div class="flex items-center gap-4 text-xs font-sans">
+              <button 
+                (click)="downloadEpubFile()"
+                [disabled]="isParsing() || isOptimizing()"
+                class="py-2 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition shadow shadow-emerald-500/10 cursor-pointer focus:outline-none">
+                <mat-icon class="text-[16px] !h-4 !w-4 leading-none">book</mat-icon>
+                Xuất file sách EPUB
+              </button>
+            </div>
           </div>
 
           <!-- Preview Content Canvas Window -->
@@ -431,7 +390,7 @@
   <footer class="border-t border-white/5 bg-slate-950/60 py-5 px-6 shrink-0 z-10">
     <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-4 text-xs font-sans">
       <div class="flex flex-wrap justify-center items-center gap-2.5 sm:gap-4 text-slate-400">
-        <span class="text-slate-400">v1.0.0</span>
+        <span class="text-slate-400">v1.0.1</span>
         <span class="text-slate-800 font-light text-xs select-none">•</span>
         <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors duration-200">GitHub</a>
         <span class="text-slate-800 font-light text-xs select-none">•</span>
