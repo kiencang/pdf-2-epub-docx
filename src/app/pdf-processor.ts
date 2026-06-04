@@ -86,6 +86,18 @@ export class PdfProcessor {
     return this.db.openDb();
   }
 
+  saveHistoryItem(item: any): Promise<void> {
+    return this.db.saveHistoryItem(item);
+  }
+
+  getAllHistoryItems(): Promise<any[]> {
+    return this.db.getAllHistoryItems();
+  }
+
+  deleteHistoryItem(id: string): Promise<void> {
+    return this.db.deleteHistoryItem(id);
+  }
+
   saveImageToDb(img: SavedImage): Promise<void> {
     return this.db.saveImageToDb(img);
   }

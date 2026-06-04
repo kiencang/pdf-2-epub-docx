@@ -58,6 +58,12 @@ export class App {
     return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
   });
 
+  // History storage
+  currentHistoryId = signal<string | null>(null);
+  historyItems = signal<any[]>([]);
+  showHistoryModal = signal<boolean>(false);
+  deletingItemId = signal<string | null>(null);
+
   // Loaded document details
   fileName = signal('');
   fileSize = signal('');
@@ -123,8 +129,9 @@ export class App {
       }
     });
 
-    afterNextRender(() => {
+    afterNextRender(async () => {
       this.loadPdfEngine();
+      await this.loadHistoryFromDb();
       
       // Load user API key from safe localStorage
       const savedKey = localStorage.getItem('user_gemini_api_key') || '';
@@ -227,6 +234,150 @@ export class App {
     return rawMsg;
   }
 
+  async loadHistoryFromDb() {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const items = await this.pdfProcessor.getAllHistoryItems();
+      items.sort((a, b) => b.timestamp - a.timestamp);
+      this.historyItems.set(items);
+    } catch (err) {
+      console.error('Lỗi khi tải lịch sử:', err);
+    }
+  }
+
+  async saveHistoryItemAndTrim(item: any) {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      await this.pdfProcessor.saveHistoryItem(item);
+      const items = await this.pdfProcessor.getAllHistoryItems();
+      items.sort((a, b) => b.timestamp - a.timestamp);
+      
+      if (items.length > 10) {
+        const itemsToDelete = items.slice(10);
+        for (const delItem of itemsToDelete) {
+          await this.pdfProcessor.deleteHistoryItem(delItem.id);
+        }
+      }
+      await this.loadHistoryFromDb();
+    } catch (err) {
+      console.error('Lỗi khi lưu lịch sử và tỉa gọn:', err);
+    }
+  }
+
+  async saveCurrentProgressToHistory() {
+    const historyId = this.currentHistoryId();
+    if (!historyId) return;
+    const file = this.pdfFile();
+    if (!file) return;
+
+    try {
+      const historyItem = {
+        id: historyId,
+        fileName: this.fileName(),
+        fileSize: this.fileSize(),
+        timestamp: Date.now(),
+        pdfPages: this.pdfPages(),
+        pdfChunks: this.pdfChunks(),
+        selectedChunkIndex: this.selectedChunkIndex(),
+        pdfFileBlob: file
+      };
+      await this.pdfProcessor.saveHistoryItem(historyItem);
+      await this.loadHistoryFromDb(); // Keep local state updated
+    } catch (err) {
+      console.error('Lỗi tự động sao lưu tiến trình:', err);
+    }
+  }
+
+  async restoreHistoryItem(item: any) {
+    if (!item) return;
+    try {
+      this.isParsing.set(true);
+      this.parsingStatus.set('Đang nạp lại lịch sử chuyển đổi...');
+
+      // 1. Reconstruct pdfFile File object from stored Blob
+      const restoredFile = new File([item.pdfFileBlob], item.fileName, { type: 'application/pdf' });
+      this.pdfFile.set(restoredFile);
+
+      // 2. Set details signals
+      this.fileName.set(item.fileName);
+      this.fileSize.set(item.fileSize);
+      this.pdfPages.set(item.pdfPages);
+      this.pdfChunks.set(item.pdfChunks);
+      this.currentHistoryId.set(item.id);
+
+      // 3. Auto-jump to the first chunk that is NOT completed
+      const indexToJump = item.pdfChunks.findIndex((c: any) => c.status !== 'completed');
+      if (indexToJump !== -1) {
+        this.selectedChunkIndex.set(indexToJump);
+        this.selectedTab.set('pdf');
+      } else {
+        const idx = item.selectedChunkIndex || 0;
+        this.selectedChunkIndex.set(idx);
+        if (item.pdfChunks && item.pdfChunks[idx] && item.pdfChunks[idx].status === 'completed') {
+          this.selectedTab.set('reflow');
+        } else {
+          this.selectedTab.set('pdf');
+        }
+      }
+
+      this.showHistoryModal.set(false);
+      this.showSuccess('Đã khôi phục lịch sử chuyển đổi!');
+    } catch (err: any) {
+      console.error('Lỗi khôi phục lịch sử:', err);
+      this.apiError.set('Không thể khôi phục lịch sử chuyển đổi: ' + err.message);
+    } finally {
+      this.isParsing.set(false);
+      this.parsingStatus.set('');
+    }
+  }
+
+  selectChunk(idx: number) {
+    this.selectedChunkIndex.set(idx);
+    const chunks = this.pdfChunks();
+    if (chunks && chunks[idx]) {
+      const chunk = chunks[idx];
+      if (chunk.status === 'completed') {
+        this.selectedTab.set('reflow');
+      } else {
+        this.selectedTab.set('pdf');
+      }
+    }
+  }
+
+  async removeHistoryItem(id: string) {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      await this.pdfProcessor.deleteHistoryItem(id);
+      
+      // If the current loaded history item is being deleted, reset the current active view
+      if (this.currentHistoryId() === id) {
+        this.currentHistoryId.set(null);
+        this.pdfFile.set(null);
+        this.fileName.set('');
+        this.fileSize.set('');
+        this.pdfPages.set([]);
+        this.pdfChunks.set([]);
+        this.selectedChunkIndex.set(0);
+      }
+
+      this.showSuccess('Đã xóa tệp khỏi Lịch sử chuyển đổi.');
+      await this.loadHistoryFromDb();
+    } catch (err) {
+      console.error('Lỗi khi xóa lịch sử:', err);
+    }
+  }
+
+  getCompletedChunksCount(chunks: any[]): number {
+    if (!chunks) return 0;
+    return chunks.filter(c => c.status === 'completed').length;
+  }
+
+  getCompletedPercent(chunks: any[]): number {
+    if (!chunks || chunks.length === 0) return 0;
+    const completed = chunks.filter(c => c.status === 'completed').length;
+    return Math.round((completed / chunks.length) * 100);
+  }
+
   /**
    * Save API Key safely to localStorage
    */
@@ -292,6 +443,9 @@ export class App {
       return;
     }
 
+    // Check duplication in history
+    const isDuplicate = this.historyItems().some(h => h.fileName === file.name);
+
     const pdfjsLib = this.pdfProcessor.getPdfjsLib();
     this.isParsing.set(true);
     this.apiError.set('');
@@ -302,6 +456,13 @@ export class App {
     this.pdfPages.set([]);
     this.pdfChunks.set([]);
     this.selectedChunkIndex.set(0);
+
+    const newHistoryId = `${Date.now()}_${file.name}`;
+    this.currentHistoryId.set(newHistoryId);
+
+    if (isDuplicate) {
+      this.showSuccess('Chúng tôi thấy file này bạn đã từng up lên, và vẫn còn trong Lịch sử chuyển đổi');
+    }
 
     try {
       this.parsingStatus.set('Đang dọn dẹp bộ nhớ ảnh cũ trong IndexedDB...');
@@ -430,6 +591,21 @@ export class App {
       this.pdfChunks.set(generatedChunks);
 
       this.parsingStatus.set('Đang thiết lập bản gốc...');
+
+      // Save initial state to Conversion History
+      if (this.currentHistoryId()) {
+        const historyItem = {
+          id: this.currentHistoryId(),
+          fileName: file.name,
+          fileSize: this.pdfProcessor.formatBytes(file.size),
+          timestamp: Date.now(),
+          pdfPages: itemsExtracted,
+          pdfChunks: generatedChunks,
+          selectedChunkIndex: 0,
+          pdfFileBlob: file
+        };
+        await this.saveHistoryItemAndTrim(historyItem);
+      }
 
       this.selectedTab.set('pdf');
       this.showSuccess('Đã trích xuất ảnh thành công từ file PDF');
@@ -645,6 +821,7 @@ Chúng tôi đính kèm danh sách các hình ảnh thực tế bóc tách đư�
       await this.executeChunkOptimization(chunkIndex);
       this.selectedTab.set('reflow');
       this.showSuccess(`Đã ráp nối thành công dữ liệu cho ${chunk.id}.`);
+      await this.saveCurrentProgressToHistory();
     } catch (err: any) {
       console.error(err);
       const translated = this.translateGeminiError(err.message || err);
@@ -658,6 +835,7 @@ Chúng tôi đính kèm danh sách các hình ảnh thực tế bóc tách đư�
         };
         return newCs;
       });
+      await this.saveCurrentProgressToHistory();
     } finally {
       if (this.timerInterval) {
         clearInterval(this.timerInterval);
@@ -767,6 +945,8 @@ Chúng tôi đính kèm danh sách các hình ảnh thực tế bóc tách đư�
         };
         return newCs;
       });
+    } finally {
+      await this.saveCurrentProgressToHistory();
     }
   }
 
