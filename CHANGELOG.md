@@ -9,6 +9,7 @@ và dự án này tuân thủ [Semantic Versioning](https://semver.org/spec/v2.0
 ### Fixed
 - Thêm cơ chế chia chunk;
 - Thêm tùy chọn model khi ráp nối dữ liệu;
+- Điều chỉnh một số toast;
 
 ## [v1.0.6]- 2026-06-04
 ### Fixed
