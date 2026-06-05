@@ -8,6 +8,8 @@ và dự án này tuân thủ [Semantic Versioning](https://semver.org/spec/v2.0
 ## [v1.0.13]- 2026-06-05
 ### Fixed
 - Loại bỏ tiêu đề dư thừa (tên file) chèn vào nội dung;
+- Áp dụng ThinkingLevel HIGH cho quá trình ghép nối tài liệu;
+- Điều chỉnh thông tin trong một số modal cho phù hợp hơn;
 
 ## [v1.0.12]- 2026-06-05
 ### Fixed
