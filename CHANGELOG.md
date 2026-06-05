@@ -5,6 +5,11 @@ Tất cả những thay đổi đáng chú ý của dự án kiencang/Book-silaT
 Định dạng dựa trên [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 và dự án này tuân thủ [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.15]- 2026-06-05
+### Fixed
+- Điều chỉnh prompt cho phù hợp hơn với định dạng tên ảnh mới;
+- Điều chỉnh khu vực upload tránh co giãn trong quá trình phân tích; không cho phép upload tiếp trong quá trình phân tích;
+
 ## [v1.0.14]- 2026-06-05
 ### Fixed
 - Chia chunk vật lý bằng pdf-lib để gửi đi dữ liệu tiết kiệm hơn;
