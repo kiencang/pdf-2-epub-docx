@@ -14,6 +14,15 @@ import { MatIconModule } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import { PdfProcessor, PdfPageData } from './pdf-processor';
 
+import { Header } from './header';
+import { Footer } from './footer';
+import { EmptyState } from './empty-state';
+import { InstructionModal } from './instruction-modal';
+import { ApiKeyModal } from './api-key-modal';
+import { HistoryModal } from './history-modal';
+import { WorkspaceAside } from './workspace-aside';
+import { WorkspacePreview } from './workspace-preview';
+
 export interface PdfChunk {
   id: string;
   index: number;
@@ -29,7 +38,18 @@ export interface PdfChunk {
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-root',
-  imports: [CommonModule, MatIconModule],
+  imports: [
+    CommonModule,
+    MatIconModule,
+    Header,
+    Footer,
+    EmptyState,
+    InstructionModal,
+    ApiKeyModal,
+    HistoryModal,
+    WorkspaceAside,
+    WorkspacePreview
+  ],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
@@ -145,7 +165,6 @@ export class App {
   }
 
   openApiKeyModal() {
-    this.tempApiKey.set(this.clientApiKey());
     this.showApiKeyModal.set(true);
   }
 
@@ -161,13 +180,13 @@ export class App {
     }
   }
 
-  saveApiKeyModal() {
-    const rawKey = this.tempApiKey().trim();
-    if (rawKey && (/[\u0080-\uFFFF]/.test(rawKey) || rawKey.includes(' '))) {
+  saveApiKey(rawKey: string) {
+    const trimmed = rawKey.trim();
+    if (trimmed && (/[\u0080-\uFFFF]/.test(trimmed) || trimmed.includes(' '))) {
       this.apiError.set('🔴 Lỗi định dạng API Key: API Key cá nhân bạn nhập chứa ký tự không hợp lệ (như dấu cách, tiếng Việt có dấu). Vui lòng kiểm tra lại.');
       return;
     }
-    this.updateApiKey(rawKey);
+    this.updateApiKey(trimmed);
     this.showApiKeyModal.set(false);
     this.showSuccess('Đã cấu hình API Key thành công!');
   }
@@ -432,7 +451,7 @@ export class App {
   /**
    * Deep extract PDF structure
    */
-  private async processPdfFile(file: File) {
+  async processPdfFile(file: File) {
     if (!this.isScriptLoaded() || !this.pdfProcessor.getPdfjsLib()) {
       this.apiError.set('Thư viện PDF.js đang được nạp, xin hãy đợi một giây rồi thử lại!');
       return;

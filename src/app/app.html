@@ -1,101 +1,17 @@
 <div class="min-h-screen bg-slate-900 text-slate-100 font-sans flex flex-col selection:bg-indigo-500/30 selection:text-white" id="main-app-container">
   
-  <!-- Header Bar -->
-  <header class="border-b border-white/5 bg-slate-950/80 backdrop-blur sticky top-0 z-40 px-6 py-4 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-emerald-400 p-0.5 flex items-center justify-center shadow-lg">
-        <div class="h-full w-full bg-slate-900 rounded-[10px] flex items-center justify-center">
-          <mat-icon class="text-indigo-400 text-lg">chrome_reader_mode</mat-icon>
-        </div>
-      </div>
-      <div>
-        <h1 class="text-lg font-bold tracking-tight font-sans bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">PDF-2-EPUB</h1>
-      </div>
-
-      <!-- Cool Model Switch Toggle -->
-      <div class="flex items-center bg-slate-900/90 border border-white/5 rounded-full p-0.5 ml-2.5 shadow-inner relative select-none shrink-0" id="model-toggle-wrapper">
-        <!-- Active indicator pill background with high-quality cubic-bezier transition -->
-        <div 
-          class="absolute top-0.5 bottom-0.5 rounded-full border transition-all duration-300 pointer-events-none"
-          [class.bg-amber-500/10]="selectedModel() === 'gemini-flash-latest'"
-          [class.border-amber-500/20]="selectedModel() === 'gemini-flash-latest'"
-          [class.bg-indigo-500/10]="selectedModel() === 'gemini-flash-lite-latest'"
-          [class.border-indigo-500/20]="selectedModel() === 'gemini-flash-lite-latest'"
-          style="width: calc(50% - 3px);"
-          [style.left]="selectedModel() === 'gemini-flash-latest' ? '2px' : '50%'">
-        </div>
-
-        <!-- Option 1: Flash -->
-        <button 
-          id="toggle-btn-flash"
-          type="button"
-          (click)="selectedModel.set('gemini-flash-latest')"
-          class="relative w-[68px] h-7 rounded-full flex items-center justify-center gap-1.5 text-[11px] font-bold font-sans transition-all duration-200 outline-none cursor-pointer group"
-          [class.text-amber-400]="selectedModel() === 'gemini-flash-latest'"
-          [class.text-slate-400]="selectedModel() !== 'gemini-flash-latest'"
-          [class.hover:text-slate-200]="selectedModel() !== 'gemini-flash-latest'">
-          <mat-icon class="!text-[13px] !w-3.5 !h-3.5 leading-none flex items-center justify-center group-hover:scale-110 transition-transform" [class.text-amber-400]="selectedModel() === 'gemini-flash-latest'">bolt</mat-icon>
-          <span>Flash</span>
-          
-          <!-- Tailwind Tooltip -->
-          <div class="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2.5 py-1.5 bg-slate-950 border border-white/10 text-slate-200 text-[10px] font-normal rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-200 shadow-xl whitespace-nowrap z-50 pointer-events-none">
-            <span class="font-bold text-amber-400">Flash:</span> Model này thích hợp để xử lý tài liệu có cấu trúc rất phức tạp.
-          </div>
-        </button>
-
-        <!-- Option 2: Lite -->
-        <button 
-          id="toggle-btn-lite"
-          type="button"
-          (click)="selectedModel.set('gemini-flash-lite-latest')"
-          class="relative w-[68px] h-7 rounded-full flex items-center justify-center gap-1.5 text-[11px] font-bold font-sans transition-all duration-200 outline-none cursor-pointer group"
-          [class.text-indigo-400]="selectedModel() === 'gemini-flash-lite-latest'"
-          [class.text-slate-400]="selectedModel() !== 'gemini-flash-lite-latest'"
-          [class.hover:text-slate-200]="selectedModel() !== 'gemini-flash-lite-latest'">
-          <mat-icon class="!text-[13px] !w-3.5 !h-3.5 leading-none flex items-center justify-center group-hover:scale-110 transition-transform" [class.text-indigo-400]="selectedModel() === 'gemini-flash-lite-latest'">spa</mat-icon>
-          <span>Lite</span>
-
-          <!-- Tailwind Tooltip -->
-          <div class="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2.5 py-1.5 bg-slate-950 border border-white/10 text-slate-200 text-[10px] font-normal rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-200 shadow-xl whitespace-nowrap z-50 pointer-events-none">
-            <span class="font-bold text-indigo-400">Lite (mặc định):</span> Model có khả năng xử lý tốt trong đa số trường hợp.
-          </div>
-        </button>
-      </div>
-    </div>
-
-    <!-- Status Badge -->
-    <div class="flex items-center gap-2 text-xs">
-      @if (isScriptLoaded()) {
-        <!-- Lịch sử chuyển đổi Button -->
-        <button 
-          type="button"
-          (click)="showHistoryModal.set(true)"
-          class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-white/5 rounded-full font-medium transition-colors cursor-pointer focus:outline-none">
-          <mat-icon class="!text-[13.5px] !w-3.5 !h-3.5 flex items-center justify-center leading-none">history</mat-icon>
-          <span>Lịch sử chuyển đổi</span>
-          @if (historyItems().length > 0) {
-            <span class="ml-0.5 bg-indigo-500 text-white text-[9.5px] leading-none px-1 py-0.5 rounded-full font-semibold">
-              {{ historyItems().length }}
-            </span>
-          }
-        </button>
-
-        <button 
-          type="button"
-          (click)="openApiKeyModal()"
-          [disabled]="isOptimizing() || isParsing()"
-          class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-full font-medium transition-colors cursor-pointer focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed">
-          <span class="h-1.5 w-1.5 bg-emerald-400 rounded-full" [class.animate-pulse]="!clientApiKey()"></span>
-          {{ clientApiKey() ? 'Đang dùng Key của bạn' : 'Nhập API Key' }}
-        </button>
-      } @else {
-        <span class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full font-medium">
-          <span class="h-1.5 w-1.5 bg-amber-400 rounded-full animate-bounce"></span>
-          Đang khởi tạo thư viện...
-        </span>
-      }
-    </div>
-  </header>
+  <!-- Header Bar Component -->
+  <app-header
+    [isScriptLoaded]="isScriptLoaded()"
+    [selectedModel]="selectedModel()"
+    [clientApiKey]="clientApiKey()"
+    [historyCount]="historyItems().length"
+    [isOptimizing]="isOptimizing()"
+    [isParsing]="isParsing()"
+    (modelChange)="selectedModel.set($event)"
+    (openHistory)="showHistoryModal.set(true)"
+    (openApiKey)="openApiKeyModal()">
+  </app-header>
 
   <!-- Toast notifications -->
   <div class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 items-end pointer-events-none">
@@ -105,7 +21,7 @@
           <mat-icon class="text-rose-400 shrink-0 text-[20px] w-5 h-5 leading-[20px] flex items-center justify-center">error_outline</mat-icon>
           <span class="font-sans text-sm leading-snug">{{ apiError() }}</span>
         </div>
-        <button (click)="apiError.set('')" class="text-rose-300 hover:text-white shrink-0 outline-none flex items-center justify-center">
+        <button (click)="apiError.set('')" class="text-rose-300 hover:text-white shrink-0 outline-none flex items-center justify-center cursor-pointer">
           <mat-icon class="text-[18px] w-[18px] h-[18px] leading-[18px] flex">close</mat-icon>
         </button>
       </div>
@@ -117,7 +33,7 @@
           <mat-icon class="text-emerald-400 shrink-0 text-[20px] w-5 h-5 leading-[20px] flex items-center justify-center">check_circle_outline</mat-icon>
           <span class="font-sans text-sm leading-snug">{{ successMessage() }}</span>
         </div>
-        <button (click)="showSuccess('')" class="text-emerald-300 hover:text-white shrink-0 outline-none flex items-center justify-center">
+        <button (click)="showSuccess('')" class="text-emerald-300 hover:text-white shrink-0 outline-none flex items-center justify-center cursor-pointer">
           <mat-icon class="text-[18px] w-[18px] h-[18px] leading-[18px] flex">close</mat-icon>
         </button>
       </div>
@@ -127,467 +43,78 @@
   <!-- Main Body -->
   <main class="flex-1 flex flex-col md:flex-row min-h-0">
     
-    <!-- Empty Upload State -->
+    <!-- Empty Upload State Component -->
     @if (pdfPages().length === 0) {
-      <div class="flex-1 max-w-4xl mx-auto flex flex-col items-center justify-center px-6 py-12 text-center" id="empty-state">
-        
-        <!-- Drag or Select Card -->
-        <div 
-          role="button"
-          tabindex="0"
-          (dragover)="onDragOver($event)"
-          (drop)="onFileDropped($event)"
-          (click)="fileInput.click()"
-          (keydown.enter)="fileInput.click()"
-          class="w-full max-w-lg bg-slate-950 border-2 border-dashed border-white/10 hover:border-indigo-500/50 rounded-3xl p-10 md:p-14 transition-all duration-300 shadow-2xl flex flex-col items-center group cursor-pointer">
-          
-          <input 
-            #fileInput 
-            type="file" 
-            accept="application/pdf" 
-            (change)="onFileSelected($event)" 
-            class="hidden" />
-
-          <div class="h-28 w-28 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 group-hover:scale-105 group-hover:bg-indigo-500/20 group-hover:text-indigo-300 transition-all duration-300 mb-4 border border-indigo-500/10">
-            @if (isParsing()) {
-              <mat-icon class="text-4xl w-9 h-9 text-[36px] leading-[36px] animate-spin">sync</mat-icon>
-            } @else {
-              <mat-icon class="w-16 h-16 text-[64px] leading-[64px]">cloud_upload</mat-icon>
-            }
-          </div>
-
-          @if (!isParsing()) {
-            <div class="text-[11px] font-sans font-medium text-slate-500 mb-6 text-center">
-              [Tối đa: 50MB / 500 trang]
-            </div>
-          }
-
-          @if (isParsing()) {
-            <h2 class="text-sm font-semibold tracking-tight mb-2 font-sans text-slate-100 text-center leading-snug">
-              Đang phân tích cú pháp dữ liệu...
-            </h2>
-          }
-          <p class="text-sm text-slate-400 mb-6 max-w-sm font-sans text-center leading-relaxed">
-            @if (isParsing()) {
-              {{ parsingStatus() || 'Hệ thống đang cấu trúc thông tin' }}
-            } @else {
-              Ứng dụng sẽ tự động trích xuất hình ảnh, rồi chuyển tài liệu thành <strong>định dạng EPUB</strong> tiêu chuẩn.
-            }
-          </p>
-
-          @if (!isParsing()) {
-            <span class="px-8 py-3.5 flex items-center gap-2 text-base font-semibold bg-indigo-600 hover:bg-indigo-500 rounded-lg transition shadow-lg shadow-indigo-600/10 font-sans text-white">
-              <mat-icon class="text-[20px] w-5 h-5 leading-[20px]">description</mat-icon>
-              Chọn tệp tin PDF
-            </span>
-          } @else {
-            <div class="w-full bg-slate-900 rounded-full h-1.5 max-w-xs mt-4 overflow-hidden border border-white/5">
-              <div class="bg-indigo-500 h-1.5 rounded-full animate-pulse-width" style="width: 75%"></div>
-            </div>
-          }
-        </div>
-
-      </div>
+      <app-empty-state
+        [isParsing]="isParsing()"
+        [parsingStatus]="parsingStatus()"
+        [isScriptLoaded]="isScriptLoaded()"
+        (fileSelected)="processPdfFile($event)">
+      </app-empty-state>
     }
 
     <!-- Active Workspace -->
     @if (pdfPages().length > 0) {
       <div class="flex-1 flex flex-col md:flex-row min-h-0 w-full" id="workspace">
         
-        <!-- Left Panel: Configurations & Details -->
-        <aside class="w-full md:w-80 border-r border-white/5 bg-slate-950/50 p-5 flex flex-col justify-between overflow-y-auto shrink-0 space-y-6">
-          <div class="space-y-6">
+        <!-- Left Panel: Configurations & Details Component -->
+        <app-workspace-aside
+          [fileName]="fileName()"
+          [fileSize]="fileSize()"
+          [totalPageCount]="totalPageCount()"
+          [extractedImagesCount]="extractedImagesCount()"
+          [isBatchProcessing]="isBatchProcessing()"
+          [shouldStopBatch]="shouldStopBatch()"
+          [isOptimizing]="isOptimizing()"
+          [isParsing]="isParsing()"
+          [pdfChunks]="pdfChunks()"
+          [selectedChunkIndex]="selectedChunkIndex()"
+          [optimizationTimeFormatted]="optimizationTimeFormatted()"
+          (resetPdf)="pdfPages.set([]); pdfChunks.set([]); selectedChunkIndex.set(0);"
+          (startBatch)="startBatchProcessing()"
+          (stopBatch)="stopBatchProcessing()"
+          (selectChunk)="selectChunk($event)"
+          (optimizeChunk)="optimizeChunkWithAI($event)">
+        </app-workspace-aside>
 
-            <!-- File Info Card -->
-            <div class="bg-slate-900/60 border border-white/5 rounded-2xl p-4 relative overflow-hidden group">
-              <div class="absolute top-0 right-0 p-3 text-slate-700">
-                <mat-icon class="text-3xl">picture_as_pdf</mat-icon>
-              </div>
-              <span class="text-[10px] font-mono tracking-widest text-indigo-400 uppercase font-semibold block mb-1">Tài liệu đã nạp</span>
-              <h3 class="text-sm font-bold text-slate-200 truncate pr-6 font-sans" title="{{ fileName() }}">{{ fileName() }}</h3>
-              
-              <div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-white/5 text-center">
-                <div class="bg-slate-950/50 rounded-xl p-2.5">
-                  <span class="block text-[10px] text-slate-400 uppercase font-sans">Trang</span>
-                  <span class="text-sm font-bold text-slate-200 font-mono">{{ totalPageCount() }}</span>
-                </div>
-                <div class="bg-slate-950/50 rounded-xl p-2.5">
-                  <span class="block text-[10px] text-slate-400 uppercase font-sans">Ảnh tách được</span>
-                  <span class="text-sm font-bold text-slate-200 text-indigo-400 font-mono">{{ extractedImagesCount() }}</span>
-                </div>
-              </div>
-
-              <!-- Reset current PDF -->
-              <button 
-                (click)="pdfPages.set([]); pdfChunks.set([]); selectedChunkIndex.set(0);"
-                [disabled]="isOptimizing() || isParsing()"
-                class="w-full mt-4 flex items-center justify-center gap-2 py-2 text-xs font-semibold bg-white/5 hover:bg-rose-500/10 text-slate-300 hover:text-rose-300 rounded-lg transition border border-white/5 font-sans disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/5 disabled:hover:text-slate-300">
-                <mat-icon class="text-sm">restart_alt</mat-icon>
-                Đổi tài liệu khác
-              </button>
-            </div>
-
-             <!-- Batch Operations -->
-             <div class="mt-4 border-t border-white/5 pt-4 space-y-2">
-               <div class="flex gap-2">
-                 <button 
-                   (click)="startBatchProcessing()"
-                   [disabled]="isBatchProcessing() || isOptimizing() || isParsing()"
-                   class="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition border border-indigo-500/30 font-sans shadow-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-indigo-600/50 cursor-pointer">
-                   <mat-icon class="text-[18px] w-4.5 h-4.5 flex items-center justify-center">play_circle_filled</mat-icon>
-                   Xử lý tất cả
-                 </button>
-                 
-                 <button 
-                   (click)="stopBatchProcessing()"
-                   [disabled]="!isBatchProcessing() || shouldStopBatch()"
-                   class="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold bg-white/5 hover:bg-rose-500/10 text-slate-300 hover:text-rose-300 rounded-lg transition border border-white/5 font-sans disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">
-                   <mat-icon class="text-[18px] w-4.5 h-4.5 flex items-center justify-center">stop_circle</mat-icon>
-                   Dừng lại
-                 </button>
-               </div>
-               
-               @if (isBatchProcessing() && shouldStopBatch()) {
-                 <div class="text-[10px] text-rose-400 font-mono text-center animate-pulse">
-                   ⏳ Đang chờ hoàn tất nốt tiến trình dang dở...
-                 </div>
-               } @else if (false) {
-                 <div class="text-[10px] text-indigo-400 font-mono text-center animate-pulse">
-                   ⚙️ Đang xử lý song song 2 khối cùng lúc...
-                 </div>
-               }
-             </div>
-
-             <!-- Render Chunks -->
-             <div class="mt-4 border-t border-white/5 pt-4 space-y-2">
-              <span class="text-[10px] font-mono tracking-widest text-indigo-400 uppercase font-semibold block mb-2">Các khối cần xử lý bằng AI</span>
-              
-              @for (chunk of pdfChunks(); track chunk.index) {
-                <div 
-                  role="button"
-                  tabindex="0"
-                  class="rounded-xl border p-3 flex flex-col gap-2 transition-colors cursor-pointer outline-none focus:ring-1 focus:ring-indigo-500/30"
-                  [ngClass]="selectedChunkIndex() === $index ? 'bg-indigo-900/20 border-indigo-500/50' : 'bg-slate-900/30 border-white/5 hover:bg-slate-900/60'"
-                  (click)="selectChunk($index)"
-                  (keydown.enter)="selectChunk($index)">
-                  <div class="flex items-center justify-between">
-                     <span class="text-xs font-bold text-slate-200">{{ chunk.id }}</span>
-                     <span class="text-[10px] font-mono bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">Trang {{ chunk.startPageNum }}-{{ chunk.endPageNum }}</span>
-                  </div>
-                  
-                  <div class="flex items-center justify-between mt-1">
-                    <span class="text-[10px] text-slate-400 font-mono">
-                      @if(chunk.status === 'pending') { <span class="text-slate-400">⏳ Chờ lệnh</span> } 
-                      @else if(chunk.status === 'processing') { <span class="text-amber-400 animate-pulse">⚙️ Đang xử lý...</span> } 
-                      @else if(chunk.status === 'completed') { <span class="text-emerald-400">✅ Hoàn tất</span> } 
-                      @else { <span class="text-rose-400">❌ Xảy ra lỗi</span> }
-                    </span>
-                    
-                    @if (chunk.status !== 'completed' && chunk.status !== 'processing') {
-                      <button 
-                        (click)="optimizeChunkWithAI($index); $event.stopPropagation()"
-                        [disabled]="isOptimizing()"
-                        class="text-[10px] bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white px-2 py-1 rounded disabled:opacity-50 font-semibold shadow shadow-indigo-500/20">
-                        Chạy AI
-                      </button>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-
-            @if (isOptimizing()) {
-              <div class="mt-3 flex items-center justify-center gap-1.5 text-xs text-indigo-400 font-mono bg-indigo-500/10 py-1.5 px-3 rounded-md animate-pulse">
-                <mat-icon class="text-[14px]">timer</mat-icon>
-                <span>Thời gian: {{ optimizationTimeFormatted() }}</span>
-              </div>
-            }
-
-          </div>
-
-
-        </aside>
-
-        <!-- Right Panel: Tabs, Workspace Preview and Live Editor -->
-        <div class="flex-1 flex flex-col min-h-0 bg-slate-950">
-          
-          <!-- Top Tab Switch Layout -->
-          <div class="border-b border-white/5 bg-slate-950 px-6 py-2 flex items-center justify-between shrink-0">
-            <div class="flex gap-2">
-              <button 
-                (click)="selectedTab.set('pdf')"
-                class="px-4 py-2.5 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 font-sans"
-                [ngClass]="selectedTab() === 'pdf' ? 'bg-white/10 text-white font-bold' : 'text-slate-400 hover:text-slate-200'">
-                <mat-icon class="text-xs">collections</mat-icon>
-                Ảnh & Bản Gốc (PDF)
-              </button>
-              
-              @if (reflowHtml()) {
-                <button 
-                  (click)="selectedTab.set('reflow')"
-                  class="px-4 py-2.5 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 font-sans"
-                  [ngClass]="selectedTab() === 'reflow' ? 'bg-white/10 text-white font-bold' : 'text-slate-400 hover:text-slate-200'">
-                  <mat-icon class="text-xs">chrome_reader_mode</mat-icon>
-                  Xem trước sách (Reflowed)
-                </button>
-                @if (isDevMode()) {
-                  <button 
-                    (click)="selectedTab.set('markdown')"
-                    class="px-4 py-2.5 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 font-sans"
-                    [ngClass]="selectedTab() === 'markdown' ? 'bg-white/10 text-white font-bold' : 'text-slate-400 hover:text-slate-200'">
-                    <mat-icon class="text-xs">text_snippet</mat-icon>
-                    Mã Markdown (.md)
-                  </button>
-                  <button 
-                    (click)="selectedTab.set('source')"
-                    class="px-4 py-2.5 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 font-sans"
-                    [ngClass]="selectedTab() === 'source' ? 'bg-white/10 text-white font-bold' : 'text-slate-400 hover:text-slate-200'">
-                    <mat-icon class="text-xs">code</mat-icon>
-                    Mã HTML
-                  </button>
-                }
-              }
-            </div>
-
-            <!-- Action Bar: Export EPUB -->
-            <div class="flex items-center gap-4 text-xs font-sans">
-              @if (reflowHtml()) {
-                <button 
-                  (click)="downloadEpubFile()"
-                  [disabled]="isParsing() || isOptimizing()"
-                  class="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition shadow shadow-emerald-500/10 cursor-pointer focus:outline-none">
-                  <mat-icon class="text-[18px] w-[18px] h-[18px] leading-[18px] flex items-center justify-center">file_download</mat-icon>
-                  <span>Tải xuống file sách EPUB</span>
-                </button>
-              }
-            </div>
-          </div>
-
-          <!-- Preview Content Canvas Window -->
-          <div class="flex-grow overflow-y-auto p-4 md:p-8 flex justify-center">
-            
-            <!-- Reflow modern article Tab container -->
-            @if (selectedTab() === 'reflow') {
-              <div 
-                class="w-full max-w-4xl rounded-2xl shadow-lg border p-6 md:p-14 transition-all duration-300 relative"
-                [ngClass]="{
-                  'bg-white text-slate-800 border-slate-200': themeStyle() === 'clean',
-                  'bg-[#fbf6ec] text-slate-850 border-amber-100': themeStyle() === 'warm',
-                  'bg-zinc-950 text-zinc-200 border-zinc-900 font-mono': themeStyle() === 'mono'
-                }">
-                
-                @if (reflowHtml()) {
-                  <!-- Render optimized AI output -->
-                  <div class="prose max-w-none text-justify flex flex-col" [innerHTML]="reflowSafeHtml()"></div>
-                }
-
-              </div>
-            }
-
-            <!-- Markdown Source Code Viewer -->
-            @if (selectedTab() === 'markdown') {
-              <div class="w-full max-w-4xl h-full flex flex-col bg-slate-950" id="markdown-source-preview">
-                <div class="flex flex-col justify-center items-center h-full shrink-0 bg-slate-900/50 p-6 border border-white/5 rounded-2xl font-sans gap-4 flex-grow">
-                  <mat-icon class="text-slate-500 text-[48px] !h-12 !w-12 mb-2 leading-none">markdown</mat-icon>
-                  <p class="text-sm text-slate-400 text-center max-w-md">Mã Markdown đã được bóc tách và tạo thành công. Bạn có thể tải file Markdown về máy.</p>
-                  <button 
-                    (click)="downloadMarkdownFile()" 
-                    class="px-6 py-3 mt-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-bold flex items-center gap-2 transition shadow-lg shadow-indigo-500/20">
-                    <mat-icon class="text-[18px] !h-[18px] !w-[18px] leading-none flex items-center justify-center -mt-[1px]">download</mat-icon>
-                    Tải về .md
-                  </button>
-                </div>
-              </div>
-            }
-
-            <!-- Canvas View (Original exact PDF page renders) -->
-            @if (selectedTab() === 'pdf') {
-              <div class="w-full max-w-3xl flex flex-col gap-4" id="pdf-scroller-layout">
-                <div class="text-center py-3 text-xs text-slate-400 uppercase font-mono tracking-widest block bg-slate-900 border border-white/5 rounded-2xl font-sans shrink-0">
-                  Ảnh trích xuất gốc từ cấu trúc PDF.js (Bấm ảnh riêng biệt dưới để coi chi tiết)
-                </div>
-                
-                <!-- Bounded height scrollable container with customized subtle scrollbar styling -->
-                <div class="max-h-[62vh] overflow-y-auto pr-2 flex flex-col gap-5 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
-                  <!-- Page renders -->
-                  @for (page of (activeChunk()?.pages || []); track page.pageNum) {
-                    <div class="border border-white/10 rounded-2xl overflow-hidden bg-slate-950 shadow-md p-4 space-y-4 shrink-0">
-                      <div class="text-xs font-mono text-slate-400 flex justify-between">
-                        <span class="font-bold">Trang số {{ page.pageNum }}</span>
-                        <span>Số ảnh riêng lẻ tách được: {{ page.extractedImages.length || 0 }} ảnh</span>
-                      </div>
-                      
-                      <div class="border border-white/5 rounded-xl overflow-hidden max-w-md mx-auto">
-                        <img [src]="page.pageImageUrl" alt="Trang {{ page.pageNum }}" class="w-full h-auto object-contain" referrerpolicy="no-referrer" />
-                      </div>
-
-                      @if (page.extractedImages && page.extractedImages.length > 0) {
-                        <div class="border-t border-white/5 pt-4">
-                          <span class="text-[11px] text-slate-400 font-semibold block mb-2 font-sans">Hình ảnh lẻ (đã lưu trữ IndexedDB, gắn nhãn rành mạch):</span>
-                          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            @for (img of page.extractedImages; track img.labeledKey) {
-                              <div class="bg-slate-900 border border-white/5 p-2 rounded-xl flex flex-col items-center">
-                                <button type="button" (click)="zoomImageUrl.set(img.dataUrl)" class="cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-lg p-1" title="Nhấp để phóng to ảnh">
-                                  <img [src]="img.dataUrl" alt="{{ img.labeledKey }}" class="h-20 object-contain" referrerpolicy="no-referrer" />
-                                </button>
-                                <span class="text-[10px] font-bold text-indigo-400 mt-2 font-mono">{{ img.labeledKey }}</span>
-                                <span class="text-[8px] text-slate-500 font-mono">{{ img.width }}x{{ img.height }}px</span>
-                              </div>
-                            }
-                          </div>
-                        </div>
-                      } @else {
-                        <span class="text-[10px] text-slate-600 block text-center italic font-sans">Trang này không có tệp tin ảnh rời rạc</span>
-                      }
-
-                    </div>
-                  }
-                </div>
-              </div>
-            }
-
-            <!-- Source HTML code view -->
-            @if (selectedTab() === 'source') {
-              <div class="w-full max-w-4xl h-full flex flex-col bg-slate-950" id="html-source-preview">
-                <div class="flex flex-col justify-center items-center h-full shrink-0 bg-slate-900/50 p-6 border border-white/5 rounded-2xl font-sans gap-4 flex-grow">
-                  <mat-icon class="text-slate-500 text-[48px] !h-12 !w-12 mb-2 leading-none">html</mat-icon>
-                  <p class="text-sm text-slate-400 text-center max-w-md">Mã HTML đã được bóc tách và tạo thành công. Bạn có thể tải file HTML về máy.</p>
-                  <button 
-                    (click)="downloadHtmlFile()" 
-                    class="px-6 py-3 mt-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-bold flex items-center gap-2 transition shadow-lg shadow-indigo-500/20">
-                    <mat-icon class="text-[18px] !h-[18px] !w-[18px] leading-none flex items-center justify-center -mt-[1px]">download</mat-icon>
-                    Tải về .html
-                  </button>
-                </div>
-              </div>
-            }
-
-          </div>
-
-        </div>
+        <!-- Right Panel: Tabs, Workspace Preview and Live Editor Component -->
+        <app-workspace-preview
+          [selectedTab]="selectedTab()"
+          [themeStyle]="themeStyle()"
+          [reflowHtml]="reflowHtml()"
+          [reflowSafeHtml]="reflowSafeHtml()"
+          [isDevMode]="isDevMode()"
+          [isParsing]="isParsing()"
+          [isOptimizing]="isOptimizing()"
+          [activeChunk]="activeChunk()"
+          (tabChange)="selectedTab.set($event)"
+          (themeStyleChange)="themeStyle.set($event)"
+          (downloadEpub)="downloadEpubFile()"
+          (downloadMarkdown)="downloadMarkdownFile()"
+          (downloadHtml)="downloadHtmlFile()"
+          (zoomImage)="zoomImageUrl.set($event)">
+        </app-workspace-preview>
 
       </div>
     }
 
   </main>
 
-  <!-- Footer -->
-  <footer class="border-t border-white/5 bg-slate-950/60 py-3.5 px-6 shrink-0 z-10 w-full">
-    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-sans w-full cursor-default">
-      
-      <!-- Left side: Dev mode toggle -->
-      <div class="flex items-center justify-center sm:justify-start gap-2 relative group w-full sm:flex-1 shrink-0">
-        @if (pdfPages().length > 0) {
-          <span class="text-slate-400 font-medium">Dev</span>
-          <button type="button" 
-                  (click)="isDevMode.set(!isDevMode())" 
-                  [disabled]="isOptimizing() || isParsing()"
-                  class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                  [ngClass]="isDevMode() ? 'bg-indigo-500' : 'bg-slate-700'">
-            <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                  [ngClass]="isDevMode() ? 'translate-x-4' : 'translate-x-0'"></span>
-          </button>
-          <!-- Tooltip -->
-          <div class="absolute bottom-full left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-0 mb-3 hidden w-[250px] group-hover:block bg-slate-800 text-slate-100 text-[11px] px-3 py-2 rounded-lg shadow-xl border border-white/10 z-[100] text-center sm:text-left pointer-events-none">
-            Chỉ dành cho lập trình viên, bật để quan sát file markdown và file HTML
-            <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-6 w-2 h-2 bg-slate-800 border-b border-r border-white/10 transform rotate-45"></div>
-          </div>
-        }
-      </div>
+  <!-- Footer Component -->
+  <app-footer
+    [isDevMode]="isDevMode()"
+    [hasPages]="pdfPages().length > 0"
+    [isOptimizing]="isOptimizing()"
+    [isParsing]="isParsing()"
+    (toggleDevMode)="isDevMode.set(!isDevMode())"
+    (openInstruction)="showInstruction.set(true)">
+  </app-footer>
 
-      <!-- Center side: Links -->
-      <div class="flex flex-wrap justify-center items-center gap-2.5 sm:gap-4 shrink-0 text-slate-400">
-        <span class="text-slate-400">v1.0.9</span>
-        <span class="text-slate-800 font-light text-xs select-none">•</span>
-        <a href="https://github.com/kiencang/pdf-2-epub" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors duration-200 cursor-pointer">GitHub</a>
-        <span class="text-slate-800 font-light text-xs select-none">•</span>
-        <span class="text-slate-200 font-semibold">Nguyễn Đức Anh</span>
-        <span class="text-slate-800 font-light text-xs select-none">•</span>
-        <a href="mailto:contact@wpsila.com" class="hover:text-white transition-colors duration-200 font-mono cursor-pointer">contact@wpsila.com</a>
-        <span class="text-slate-800 font-light text-xs select-none">•</span>
-        <button type="button" (click)="showInstruction.set(true)" class="text-indigo-400 hover:text-indigo-300 font-medium transition-colors duration-200 cursor-pointer focus:outline-none">
-          Hướng dẫn sử dụng
-        </button>
-      </div>
-
-      <!-- Right side: Placeholder -->
-      <div class="flex items-center justify-center sm:justify-end w-full sm:flex-1 shrink-0">
-      </div>
-      
-    </div>
-  </footer>
-
-  <!-- User Guide Interactive Modal -->
+  <!-- User Guide Interactive Modal Component -->
   @if (showInstruction()) {
-    <div 
-      role="button"
-      tabindex="0"
-      (click)="showInstruction.set(false)"
-      (keydown.escape)="showInstruction.set(false)"
-      class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in cursor-zoom-out">
-      
-      <div 
-        role="document"
-        tabindex="0"
-        (click)="$event.stopPropagation()"
-        (keydown)="$event.stopPropagation()"
-        class="bg-slate-900 border border-white/10 rounded-3xl max-w-lg w-full p-6 md:p-8 shadow-2xl relative text-left cursor-default animate-scale-up">
-        
-        <!-- Close Button -->
-        <button 
-          type="button"
-          (click)="showInstruction.set(false)"
-          class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors focus:outline-none">
-          <mat-icon class="text-[20px] w-5 h-5 flex items-center justify-center">close</mat-icon>
-        </button>
-
-        <div class="flex items-center gap-3 mb-6">
-          <div class="h-10 w-10 rounded-xl bg-indigo-500/15 flex items-center justify-center text-indigo-400 border border-indigo-500/10">
-            <mat-icon>chrome_reader_mode</mat-icon>
-          </div>
-          <div>
-            <h3 class="text-lg font-bold text-white font-sans">Hướng dẫn sử dụng</h3>
-            <p class="text-[11px] text-slate-400">Cách chuyển PDF thành định dạng sách EPUB</p>
-          </div>
-        </div>
-
-        <div class="space-y-4 font-sans text-xs text-slate-350 leading-relaxed">
-          <div class="flex gap-3">
-            <div class="h-6 w-6 rounded-lg bg-indigo-600/25 border border-indigo-500/20 text-indigo-400 font-bold font-mono text-xs flex items-center justify-center shrink-0 mt-0.5">1</div>
-            <div>
-              <p class="font-bold text-slate-200 mb-0.5">Tải lên tài liệu PDF</p>
-              <p>Kéo thả trực tiếp tệp tin PDF hoặc nhấp chọn tệp từ máy tính. Ứng dụng sẽ tách các ảnh và văn bản từ tài liệu gốc để tái cấu trúc lại thành EPUB chuẩn.</p>
-            </div>
-          </div>
-
-          <div class="flex gap-3">
-            <div class="h-6 w-6 rounded-lg bg-indigo-600/25 border border-indigo-500/20 text-indigo-400 font-bold font-mono text-xs flex items-center justify-center shrink-0 mt-0.5">2</div>
-            <div>
-              <p class="font-bold text-slate-200 mb-0.5">Nhập API Key</p>
-              <p>Bản cấu trúc thô từ tài liệu PDF (văn bản chưa dàn trang, danh sách ảnh nằm lẻ) cần AI để ráp nối. Điền khóa API Key của bạn ở phần <code class="bg-slate-950 px-1 py-0.5 text-indigo-400 font-mono rounded">Nhập API Key</code> để xử lý việc này.</p>
-            </div>
-          </div>
-
-          <div class="flex gap-3">
-            <div class="h-6 w-6 rounded-lg bg-indigo-600/25 border border-indigo-500/20 text-indigo-400 font-bold font-mono text-xs flex items-center justify-center shrink-0 mt-0.5">3</div>
-            <div>
-              <p class="font-bold text-slate-200 mb-0.5">Đổi định dạng sang EPUB</p>
-              <p>Hệ thống tự động gói dữ liệu thành tệp sách EPUB tiêu chuẩn, hỗ trợ tải về lưu trữ và xem tốt trên mọi máy đọc sách Kindle, Kobo, iPad. Và phục vụ mục đích dịch thuật tiện lợi có bảo toàn ảnh.</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="border-t border-white/5 mt-6 pt-4 flex justify-end">
-          <button 
-            type="button" 
-            (click)="showInstruction.set(false)"
-            class="px-6 py-2.5 text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white transition-colors duration-200">
-            Tôi đã hiểu
-          </button>
-        </div>
-
-      </div>
-    </div>
+    <app-instruction-modal
+      (closeModal)="showInstruction.set(false)">
+    </app-instruction-modal>
   }
 
   <!-- Interactive Lightbox Modal for extracted photos -->
@@ -599,7 +126,7 @@
       (keydown.escape)="zoomImageUrl.set(null)"
       class="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in cursor-zoom-out">
       <div class="absolute top-4 right-4 text-white">
-        <button class="w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition-colors focus:outline-none">
+        <button class="w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition-colors focus:outline-none cursor-pointer">
           <mat-icon class="text-[24px] w-6 h-6 flex items-center justify-center">close</mat-icon>
         </button>
       </div>
@@ -609,279 +136,27 @@
     </div>
   }
 
-  <!-- API Key Setup Interactive Modal -->
+  <!-- API Key Setup Interactive Modal Component -->
   @if (showApiKeyModal()) {
-    <div 
-      role="button"
-      tabindex="0"
-      (click)="showApiKeyModal.set(false)"
-      (keydown.escape)="showApiKeyModal.set(false)"
-      class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in cursor-zoom-out">
-      
-      <div 
-        role="document"
-        tabindex="0"
-        (click)="$event.stopPropagation()"
-        (keydown)="$event.stopPropagation()"
-        class="bg-slate-900 border border-white/10 rounded-3xl max-w-xl w-full p-6 md:p-8 shadow-2xl relative text-left cursor-default animate-scale-up">
-        
-        <!-- Close Button -->
-        <button 
-          type="button"
-          (click)="showApiKeyModal.set(false)"
-          class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors focus:outline-none">
-          <mat-icon class="text-[20px] w-5 h-5 flex items-center justify-center">close</mat-icon>
-        </button>
-
-        <div class="flex items-center gap-3 mb-6">
-          <div class="h-10 w-10 rounded-xl bg-indigo-500/15 flex items-center justify-center text-indigo-400 border border-indigo-500/10">
-            <mat-icon>vpn_key</mat-icon>
-          </div>
-          <div>
-            <h3 class="text-lg font-bold text-white font-sans">Cấu hình Gemini API Key</h3>
-          </div>
-        </div>
-
-        <div class="space-y-6">
-          <!-- Description -->
-          <p class="text-xs text-slate-350 leading-relaxed font-sans">
-            Để sử dụng công cụ chuyển đổi này bạn cần khóa API Key của Gemini. Bạn hãy vào link "Nơi lấy API Key Gemini" để thao tác. Key miễn phí chỉ có hiệu lực nếu bạn dùng ứng dụng qua AI Studio, với ai dùng trên pdf-2-epub.wpsila.com, chỉ Key trả phí mới dùng được. Hãy <a href="https://aistudio.google.com/apps/9a11586a-e712-4c10-a1b6-751ab78fc10b?showPreview=true&showAssistant=true" target="_blank" rel="noopener noreferrer" class="text-indigo-400 hover:text-indigo-300 hover:underline">remix ứng dụng trên AI Studio</a> để dùng miễn phí.
-          </p>
-
-          <div class="flex justify-center pb-2">
-            <img src="remix-epub.png" alt="Remix App" class="rounded-xl border border-white/10 w-full object-contain" referrerpolicy="no-referrer" />
-          </div>
-
-          <!-- Alert/Source bar -->
-          <div class="bg-slate-950/60 border border-white/5 rounded-xl px-4 py-3 flex flex-wrap items-center justify-start gap-3 sm:gap-4 text-xs">
-            <div class="flex items-center gap-2">
-              @if (!tempApiKey().trim()) {
-                <span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2.5 py-1 rounded-lg text-[11px] font-medium font-sans">
-                  Bạn chưa nhập API Key cho ứng dụng
-                </span>
-              } @else {
-                <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-lg text-[11px] font-medium font-sans font-semibold">
-                  Đã nhập API Key cho ứng dụng
-                </span>
-              }
-            </div>
-            
-            <div class="flex items-center gap-2 text-xs">
-              <span class="text-slate-700 hidden sm:inline select-none">|</span>
-              <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
-                Nơi lấy API Key Gemini
-              </a>
-            </div>
-          </div>
-
-          <!-- Input section -->
-          <div class="space-y-2">
-            <label for="modal-gemini-key-input" class="block text-[10px] font-sans font-bold text-slate-400 uppercase tracking-wider">
-              Gemini API Key cá nhân
-            </label>
-            <div class="relative bg-slate-950 border border-white/15 rounded-xl overflow-hidden focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500/25 transition-all">
-              <input 
-                id="modal-gemini-key-input"
-                [type]="showApiKey() ? 'text' : 'password'"
-                placeholder="AIzaSy..." 
-                [value]="tempApiKey()"
-                (input)="tempApiKey.set($any($event.target).value)"
-                class="w-full bg-transparent pl-4 pr-12 py-3 text-xs text-slate-200 placeholder-slate-700 font-mono focus:outline-none" />
-              <button 
-                type="button" 
-                (click)="showApiKey.set(!showApiKey())"
-                class="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-200 shrink-0 transition-colors focus:outline-none outline-none hover:bg-white/5 rounded-lg">
-                <mat-icon class="text-[20px] w-5 h-5 flex items-center justify-center">
-                  {{ showApiKey() ? 'visibility_off' : 'visibility' }}
-                </mat-icon>
-              </button>
-            </div>
-            <!-- Security note -->
-            <p class="text-[11px] text-slate-400 font-sans leading-normal">
-              Khóa API của bạn được lưu cục bộ tuyệt đối trong trình duyệt của bạn ( <code class="bg-slate-950 px-1.5 py-0.5 font-mono rounded text-indigo-400">LocalStorage</code> ), không bao giờ gửi lên bất kỳ máy chủ nào khác.
-            </p>
-          </div>
-          
-          <!-- Actions footer buttons -->
-          <div class="border-t border-white/5 pt-4 flex items-center justify-between">
-            <button 
-              type="button" 
-              (click)="clearApiKeyModal()"
-              class="px-4 py-2 flex items-center text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 rounded-lg transition-colors duration-200 focus:outline-none">
-              Xóa Key cá nhân
-            </button>
-            
-            <div class="flex items-center gap-3">
-              <button 
-                type="button" 
-                (click)="showApiKeyModal.set(false)"
-                class="px-5 py-2 text-xs font-semibold bg-white/5 hover:bg-white/10 rounded-lg text-slate-300 transition-colors duration-200 focus:outline-none">
-                Hủy
-              </button>
-              <button 
-                type="button" 
-                (click)="saveApiKeyModal()"
-                class="px-5 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-750 rounded-lg text-white transition-colors duration-200 shadow-md shadow-indigo-600/15 focus:outline-none">
-                Lưu cấu hình
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <app-api-key-modal
+      [clientApiKey]="clientApiKey()"
+      (closeModal)="showApiKeyModal.set(false)"
+      (save)="saveApiKey($event)"
+      (clearKey)="clearApiKeyModal()">
+    </app-api-key-modal>
   }
 
-  <!-- Conversion History Modal -->
+  <!-- Conversion History Modal Component -->
   @if (showHistoryModal()) {
-    <div 
-      role="button"
-      tabindex="0"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in" 
-      id="modal-history-backdrop"
-      (click)="showHistoryModal.set(false)"
-      (keydown.escape)="showHistoryModal.set(false)">
-      
-      <div 
-        role="document"
-        tabindex="0"
-        (click)="$event.stopPropagation()"
-        (keydown)="$event.stopPropagation()"
-        class="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh] animate-scale-up text-left" 
-        id="modal-history-content">
-        
-        <!-- Modal Header -->
-        <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-slate-950/40">
-          <div class="flex items-center gap-2.5">
-            <mat-icon class="text-indigo-400 text-xl leading-none">history</mat-icon>
-            <div>
-              <h3 class="text-sm font-bold text-slate-100 font-sans tracking-tight">Lịch sử chuyển đổi gần đây</h3>
-              <p class="text-[11px] text-slate-400 font-sans mt-0.5">Lưu lại tối đa 10 tệp tin gần đây nhất của bạn</p>
-            </div>
-          </div>
-          <button 
-            type="button" 
-            (click)="showHistoryModal.set(false)"
-            class="text-slate-400 hover:text-white hover:bg-white/5 w-8 h-8 rounded-lg flex items-center justify-center transition-colors focus:outline-none outline-none">
-            <mat-icon class="text-[20px] w-5 h-5 flex items-center justify-center">close</mat-icon>
-          </button>
-        </div>
-
-        <!-- Modal Body / History List -->
-        <div class="p-6 overflow-y-auto space-y-4 flex-1">
-          @if (historyItems().length === 0) {
-            <div class="py-12 flex flex-col items-center justify-center text-center">
-              <div class="h-16 w-16 bg-slate-800/50 rounded-2xl flex items-center justify-center border border-white/5 mb-4 text-slate-500">
-                <mat-icon class="!text-[32px] !w-8 !h-8 leading-none flex items-center justify-center animate-pulse">folder_open</mat-icon>
-              </div>
-              <h4 class="text-xs font-bold text-slate-300 font-sans">Chưa có lịch sử chuyển đổi</h4>
-              <p class="text-[11px] text-slate-500 font-sans max-w-xs mt-1.5 leading-relaxed">
-                Tệp PDF bạn xử lý sẽ được lưu tiến trình ở đây, giúp bạn dễ dàng làm việc tiếp khi quay trở lại.
-              </p>
-            </div>
-          } @else {
-            @for (item of historyItems(); track item.id) {
-              <div 
-                [class.border-indigo-500/40]="currentHistoryId() === item.id"
-                [class.bg-slate-950/40]="currentHistoryId() === item.id"
-                [class.border-white/5]="currentHistoryId() !== item.id"
-                [class.bg-slate-950/20]="currentHistoryId() !== item.id"
-                class="border rounded-xl p-4 transition-all hover:border-slate-700 hover:bg-slate-950/30">
-                
-                <div class="flex items-start justify-between gap-4">
-                  <!-- File info -->
-                  <div class="space-y-1 min-w-0 flex-1">
-                    <div class="flex items-center flex-wrap gap-2 min-w-0">
-                      <span class="text-xs font-bold text-slate-100 font-sans break-all truncate block select-text">
-                        {{ item.fileName }}
-                      </span>
-                      @if (currentHistoryId() === item.id) {
-                        <span class="inline-flex items-center gap-1 text-[9.5px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-1.5 py-0.5 rounded-md font-mono animate-pulse">
-                          Đang tải
-                        </span>
-                      }
-                    </div>
-                    <div class="flex items-center gap-2 text-[10.5px] text-slate-400 font-sans">
-                      <span class="font-medium bg-slate-800 px-1.5 py-0.5 rounded text-[10px] text-slate-300">{{ item.fileSize }}</span>
-                      <span class="text-slate-600">•</span>
-                      <span>{{ item.pdfPages.length }} trang</span>
-                    </div>
-                  </div>
-
-                  <!-- Quick Actions / Confirm Delete -->
-                  @if (deletingItemId() === item.id) {
-                    <div class="flex items-center gap-1.5 shrink-0 bg-rose-500/10 border border-rose-500/20 rounded-lg p-1 animate-fade-in">
-                      <span class="text-[10px] text-rose-400 font-bold px-1.5 font-sans">Xác nhận xóa?</span>
-                      <button 
-                        type="button"
-                        (click)="removeHistoryItem(item.id); deletingItemId.set(null)"
-                        class="px-2 py-1 flex items-center justify-center text-[10px] font-bold bg-rose-600 hover:bg-rose-500 text-white rounded transition-colors cursor-pointer focus:outline-none">
-                        Xóa
-                      </button>
-                      <button 
-                        type="button"
-                        (click)="deletingItemId.set(null)"
-                        class="px-2 py-1 flex items-center justify-center text-[10px] font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 rounded transition-colors cursor-pointer focus:outline-none">
-                        Hủy
-                      </button>
-                    </div>
-                  } @else {
-                    <div class="flex items-center gap-2 shrink-0">
-                      <button 
-                        type="button"
-                        [disabled]="isParsing() || isOptimizing()"
-                        (click)="restoreHistoryItem(item)"
-                        class="px-2.5 py-1.5 flex items-center justify-center gap-1.5 text-[11px] font-semibold bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:opacity-50 text-white rounded-lg transition-colors cursor-pointer focus:outline-none">
-                        <mat-icon class="!text-[12px] !w-3 !h-3 leading-none flex items-center justify-center">folder_shared</mat-icon>
-                        <span>Khôi phục</span>
-                      </button>
-                      
-                      <button 
-                        type="button"
-                        (click)="deletingItemId.set(item.id)"
-                        class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer focus:outline-none"
-                        title="Xóa khỏi lịch sử">
-                        <mat-icon class="text-[18px] w-4.5 h-4.5 flex items-center justify-center leading-none">delete_outline</mat-icon>
-                      </button>
-                    </div>
-                  }
-                </div>
-
-                <!-- Progress display -->
-                <div class="mt-3 pt-3 border-t border-white/5">
-                  <div class="flex items-center justify-between text-[11px] text-slate-400">
-                    <span class="flex items-center gap-1.5 font-sans font-medium text-slate-300">
-                      <mat-icon class="!text-[12px] !w-3.5 !h-3.5 text-indigo-400 flex items-center justify-center leading-none">done_all</mat-icon>
-                      Hoàn thành: {{ getCompletedChunksCount(item.pdfChunks) }}/{{ item.pdfChunks.length }} khối 
-                      ({{ getCompletedPercent(item.pdfChunks) }}%)
-                    </span>
-                    <span class="text-[10px] font-mono text-slate-500 opacity-60">{{ item.timestamp | date:'HH:mm dd/MM/yyyy' }}</span>
-                  </div>
-                  <!-- Progress bar -->
-                  <div class="mt-1.5 w-full bg-slate-950 border border-white/5 rounded-full h-1 overflow-hidden">
-                    <div 
-                      class="bg-gradient-to-r from-indigo-500 to-emerald-400 h-full rounded-full transition-all duration-300"
-                      [style.width.%]="getCompletedPercent(item.pdfChunks)">
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            }
-          }
-        </div>
-
-        <!-- Modal Footer -->
-        <div class="px-6 py-4 border-t border-white/5 flex items-center justify-end bg-slate-950/20">
-          <button 
-            type="button" 
-            (click)="showHistoryModal.set(false)"
-            class="px-5 py-2 text-xs font-semibold bg-white/5 hover:bg-white/10 rounded-lg text-slate-300 transition-colors focus:outline-none cursor-pointer">
-            Đóng
-          </button>
-        </div>
-
-      </div>
-    </div>
+    <app-history-modal
+      [historyItems]="historyItems()"
+      [currentHistoryId]="currentHistoryId()"
+      [isParsing]="isParsing()"
+      [isOptimizing]="isOptimizing()"
+      (closeModal)="showHistoryModal.set(false)"
+      (restoreItem)="restoreHistoryItem($event)"
+      (deleteItem)="removeHistoryItem($event)">
+    </app-history-modal>
   }
 
 </div>
