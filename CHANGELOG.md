@@ -5,6 +5,11 @@ Tất cả những thay đổi đáng chú ý của dự án kiencang/Book-silaT
 Định dạng dựa trên [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 và dự án này tuân thủ [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.17]- 2026-06-06
+### Fixed
+- Điều chỉnh nhẹ giao diện;
+- Tinh chỉnh một chút prompt (bổ sung ghi chú tiếng Anh cho cụm từ sơ đồ, biểu đồ);
+
 ## [v1.0.16]- 2026-06-05
 ### Fixed
 - Bổ sung khả năng nhận diện text trong sơ đồ/biểu đồ;
