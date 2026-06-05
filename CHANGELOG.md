@@ -8,7 +8,7 @@ và dự án này tuân thủ [Semantic Versioning](https://semver.org/spec/v2.0
 ## [v1.0.15]- 2026-06-05
 ### Fixed
 - Điều chỉnh prompt cho phù hợp hơn với định dạng tên ảnh mới;
-- Điều chỉnh khu vực upload tránh co giãn trong quá trình phân tích; không cho phép upload tiếp trong quá trình phân tích;
+- Điều chỉnh khu vực upload tránh co giãn xô đẩy quá nhiều trong quá trình phân tích; không cho phép upload tiếp trong quá trình phân tích;
 
 ## [v1.0.14]- 2026-06-05
 ### Fixed
