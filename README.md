@@ -1,2 +1,2 @@
 # pdf-2-epub-docx
-Sử dụng thư viện PDF.js để trích xuất ảnh trong file PDF, sau đó dùng AI để chuyển định dạng sang markdown và lắp ghép ảnh đúng vị trí. Cuối cùng chuyển đổi thành định dạng EPUB tiêu chuẩn để làm đầu vào dịch thuật ưa thích cho AI.
+Sử dụng thư viện PDF.js để trích xuất ảnh trong file PDF, sau đó dùng AI để chuyển định dạng sang markdown và lắp ghép ảnh đúng vị trí, trích xuất text trong ảnh sơ đồ biểu đồ. Cuối cùng chuyển đổi thành định dạng EPUB tiêu chuẩn để làm đầu vào dịch thuật ưa thích cho AI.
