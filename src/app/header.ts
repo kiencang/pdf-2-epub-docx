@@ -19,7 +19,10 @@ import { MatIconModule } from '@angular/material/icon';
         </div>
 
         <!-- Cool Model Switch Toggle -->
-        <div class="flex items-center bg-slate-900/90 border border-white/5 rounded-full p-0.5 ml-2.5 shadow-inner relative select-none shrink-0" id="model-toggle-wrapper">
+        <div class="flex items-center bg-slate-900/90 border border-white/5 rounded-full p-0.5 ml-2.5 shadow-inner relative select-none shrink-0 transition-opacity duration-200"
+             [class.opacity-50]="isOptimizing() || isParsing()"
+             [class.pointer-events-none]="isOptimizing() || isParsing()"
+             id="model-toggle-wrapper">
           <!-- Active indicator pill background with high-quality cubic-bezier transition -->
           <div 
             class="absolute top-0.5 bottom-0.5 rounded-full border transition-all duration-300 pointer-events-none"
@@ -36,7 +39,8 @@ import { MatIconModule } from '@angular/material/icon';
             id="toggle-btn-flash"
             type="button"
             (click)="onModelSelect('gemini-flash-latest')"
-            class="relative w-[68px] h-7 rounded-full flex items-center justify-center gap-1.5 text-[11px] font-bold font-sans transition-all duration-200 outline-none cursor-pointer group"
+            [disabled]="isOptimizing() || isParsing()"
+            class="relative w-[68px] h-7 rounded-full flex items-center justify-center gap-1.5 text-[11px] font-bold font-sans transition-all duration-200 outline-none cursor-pointer group disabled:cursor-not-allowed"
             [class.text-amber-400]="selectedModel() === 'gemini-flash-latest'"
             [class.text-slate-400]="selectedModel() !== 'gemini-flash-latest'"
             [class.hover:text-slate-200]="selectedModel() !== 'gemini-flash-latest'">
@@ -54,7 +58,8 @@ import { MatIconModule } from '@angular/material/icon';
             id="toggle-btn-lite"
             type="button"
             (click)="onModelSelect('gemini-flash-lite-latest')"
-            class="relative w-[68px] h-7 rounded-full flex items-center justify-center gap-1.5 text-[11px] font-bold font-sans transition-all duration-200 outline-none cursor-pointer group"
+            [disabled]="isOptimizing() || isParsing()"
+            class="relative w-[68px] h-7 rounded-full flex items-center justify-center gap-1.5 text-[11px] font-bold font-sans transition-all duration-200 outline-none cursor-pointer group disabled:cursor-not-allowed"
             [class.text-indigo-400]="selectedModel() === 'gemini-flash-lite-latest'"
             [class.text-slate-400]="selectedModel() !== 'gemini-flash-lite-latest'"
             [class.hover:text-slate-200]="selectedModel() !== 'gemini-flash-lite-latest'">
@@ -76,7 +81,8 @@ import { MatIconModule } from '@angular/material/icon';
           <button 
             type="button"
             (click)="openHistory.emit()"
-            class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-white/5 rounded-full font-medium transition-colors cursor-pointer focus:outline-none">
+            [disabled]="isOptimizing() || isParsing()"
+            class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-white/5 rounded-full font-medium transition-colors cursor-pointer focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none">
             <mat-icon class="!text-[13.5px] !w-3.5 !h-3.5 flex items-center justify-center leading-none">history</mat-icon>
             <span>Lịch sử chuyển đổi</span>
             @if (historyCount() > 0) {
@@ -118,6 +124,7 @@ export class Header {
   openApiKey = output<void>();
 
   onModelSelect(model: 'gemini-flash-latest' | 'gemini-flash-lite-latest') {
+    if (this.isOptimizing() || this.isParsing()) return;
     this.modelChange.emit(model);
   }
 }
