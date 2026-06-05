@@ -34,7 +34,7 @@ import { MatIconModule } from '@angular/material/icon';
           </div>
           <div>
             <h3 class="text-lg font-bold text-white font-sans">Hướng dẫn sử dụng</h3>
-            <p class="text-[11px] text-slate-400">Cách chuyển PDF thành định dạng sách EPUB</p>
+            <p class="text-[11px] text-slate-400">Cách chuyển PDF thành định dạng sách EPUB & DOCX</p>
           </div>
         </div>
 
@@ -58,8 +58,8 @@ import { MatIconModule } from '@angular/material/icon';
           <div class="flex gap-3">
             <div class="h-6 w-6 rounded-lg bg-indigo-600/25 border border-indigo-500/20 text-indigo-400 font-bold font-mono text-xs flex items-center justify-center shrink-0 mt-0.5">3</div>
             <div>
-              <p class="font-bold text-slate-200 mb-0.5">Đổi định dạng sang EPUB</p>
-              <p>Hệ thống tự động gói dữ liệu thành tệp sách EPUB tiêu chuẩn, hỗ trợ tải về lưu trữ và xem tốt trên các máy đọc sách phổ thông như Kindle, iPad, v.v... Và quan trọng nhất định dạng này giúp dịch thuật rất tiện lợi & có bảo toàn ảnh.</p>
+              <p class="font-bold text-slate-200 mb-0.5">Đổi định dạng sang EPUB & DOCX</p>
+              <p>Hệ thống tự động gói dữ liệu thành tệp sách EPUB & định dạng DOCX, hỗ trợ tải về lưu trữ. EPUB xem tốt trên các máy đọc sách phổ thông như Kindle, iPad, v.v... DOCX là định dạng chuyên cho mục đích soạn thảo văn bản.<br/><br/>Và quan trọng nhất đầu vào là định dạng EPUB giúp dịch thuật rất tiện lợi & có bảo toàn ảnh.</p>
             </div>
           </div>
         </div>

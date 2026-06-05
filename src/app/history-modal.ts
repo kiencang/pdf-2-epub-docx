@@ -41,7 +41,7 @@ import { MatIconModule } from '@angular/material/icon';
           </div>
           <!-- Description spans full width beneath -->
           <p class="text-[11px] text-slate-400 font-sans leading-relaxed">
-            Lưu lại tối đa 10 tệp tin gần đây nhất của bạn. Các lưu trữ này chỉ lưu tại trình duyệt mà bạn đang dùng. Chúng có thể bị mất nếu bạn xóa dữ liệu web. Luôn chủ động tải về định dạng EPUB hoàn chỉnh sau khi chuyển đổi xong để lưu trữ lâu dài.
+            Lưu lại tối đa 10 tệp tin gần đây nhất của bạn. Các lưu trữ này chỉ lưu tại trình duyệt mà bạn đang dùng & chúng có thể bị mất nếu bạn xóa dữ liệu web. Luôn chủ động tải về định dạng EPUB & DOCX hoàn chỉnh sau khi chuyển đổi xong để lưu trữ lâu dài.
           </p>
         </div>
 
@@ -60,11 +60,19 @@ import { MatIconModule } from '@angular/material/icon';
           } @else {
             @for (item of historyItems(); track item.id) {
               <div 
+                role="button"
+                [attr.aria-label]="'Khôi phục tiến trình tài liệu ' + item.fileName"
+                tabindex="0"
                 [class.border-indigo-500/40]="currentHistoryId() === item.id"
                 [class.bg-slate-950/40]="currentHistoryId() === item.id"
                 [class.border-white/5]="currentHistoryId() !== item.id"
                 [class.bg-slate-950/20]="currentHistoryId() !== item.id"
-                class="border rounded-xl p-4 transition-all hover:border-slate-700 hover:bg-slate-950/30">
+                [class.cursor-pointer]="!isParsing() && !isOptimizing()"
+                [class.opacity-75]="isParsing() || isOptimizing()"
+                (click)="!isParsing() && !isOptimizing() && restoreItem.emit(item)"
+                (keydown.enter)="!isParsing() && !isOptimizing() && restoreItem.emit(item)"
+                (keydown.space)="$event.preventDefault(); !isParsing() && !isOptimizing() && restoreItem.emit(item)"
+                class="border rounded-xl p-4 transition-all hover:border-indigo-500/30 hover:bg-slate-950/40 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50">
                 
                 <div class="flex items-start justify-between gap-4">
                   <!-- File info -->
@@ -92,13 +100,13 @@ import { MatIconModule } from '@angular/material/icon';
                       <span class="text-[10px] text-rose-400 font-bold px-1.5 font-sans">Xác nhận xóa?</span>
                       <button 
                         type="button"
-                        (click)="deleteItem.emit(item.id); deletingItemId.set(null)"
+                        (click)="$event.stopPropagation(); deleteItem.emit(item.id); deletingItemId.set(null)"
                         class="px-2 py-1 flex items-center justify-center text-[10px] font-bold bg-rose-600 hover:bg-rose-500 text-white rounded transition-colors cursor-pointer focus:outline-none">
                         Xóa
                       </button>
                       <button 
                         type="button"
-                        (click)="deletingItemId.set(null)"
+                        (click)="$event.stopPropagation(); deletingItemId.set(null)"
                         class="px-2 py-1 flex items-center justify-center text-[10px] font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 rounded transition-colors cursor-pointer focus:outline-none">
                         Hủy
                       </button>
@@ -108,7 +116,7 @@ import { MatIconModule } from '@angular/material/icon';
                       <button 
                         type="button"
                         [disabled]="isParsing() || isOptimizing()"
-                        (click)="restoreItem.emit(item)"
+                        (click)="$event.stopPropagation(); restoreItem.emit(item)"
                         class="px-2.5 py-1.5 flex items-center justify-center gap-1.5 text-[11px] font-semibold bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:opacity-50 text-white rounded-lg transition-colors cursor-pointer focus:outline-none">
                         <mat-icon class="!text-[12px] !w-3 !h-3 leading-none flex items-center justify-center">folder_shared</mat-icon>
                         <span>Khôi phục</span>
@@ -116,7 +124,7 @@ import { MatIconModule } from '@angular/material/icon';
                       
                       <button 
                         type="button"
-                        (click)="deletingItemId.set(item.id)"
+                        (click)="$event.stopPropagation(); deletingItemId.set(item.id)"
                         class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer focus:outline-none"
                         title="Xóa khỏi lịch sử">
                         <mat-icon class="text-[18px] w-4.5 h-4.5 flex items-center justify-center leading-none">delete_outline</mat-icon>

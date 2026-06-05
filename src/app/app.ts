@@ -23,6 +23,7 @@ import { ApiKeyModal } from './api-key-modal';
 import { HistoryModal } from './history-modal';
 import { WorkspaceAside } from './workspace-aside';
 import { WorkspacePreview } from './workspace-preview';
+import { ToastNotification } from './toast-notification';
 
 export interface PdfChunk {
   id: string;
@@ -49,7 +50,8 @@ export interface PdfChunk {
     ApiKeyModal,
     HistoryModal,
     WorkspaceAside,
-    WorkspacePreview
+    WorkspacePreview,
+    ToastNotification
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -182,6 +184,12 @@ export class App {
     }
   }
 
+  logError(message: any, ...optionalParams: any[]) {
+    if (this.isDevMode()) {
+      console.error(message, ...optionalParams);
+    }
+  }
+
   saveApiKey(rawKey: string) {
     const trimmed = rawKey.trim();
     if (trimmed && (/[\u0080-\uFFFF]/.test(trimmed) || trimmed.includes(' '))) {
@@ -262,7 +270,7 @@ export class App {
       items.sort((a, b) => b.timestamp - a.timestamp);
       this.historyItems.set(items);
     } catch (err) {
-      console.error('Lỗi khi tải lịch sử:', err);
+      this.logError('Lỗi khi tải lịch sử:', err);
     }
   }
 
@@ -281,7 +289,7 @@ export class App {
       }
       await this.loadHistoryFromDb();
     } catch (err) {
-      console.error('Lỗi khi lưu lịch sử và tỉa gọn:', err);
+      this.logError('Lỗi khi lưu lịch sử và tỉa gọn:', err);
     }
   }
 
@@ -305,7 +313,7 @@ export class App {
       await this.pdfProcessor.saveHistoryItem(historyItem);
       await this.loadHistoryFromDb(); // Keep local state updated
     } catch (err) {
-      console.error('Lỗi tự động sao lưu tiến trình:', err);
+      this.logError('Lỗi tự động sao lưu tiến trình:', err);
     }
   }
 
@@ -344,7 +352,7 @@ export class App {
       this.showHistoryModal.set(false);
       this.showSuccess('Đã khôi phục lịch sử chuyển đổi!');
     } catch (err: any) {
-      console.error('Lỗi khôi phục lịch sử:', err);
+      this.logError('Lỗi khôi phục lịch sử:', err);
       this.apiError.set('Không thể khôi phục lịch sử chuyển đổi: ' + err.message);
     } finally {
       this.isParsing.set(false);
@@ -384,7 +392,7 @@ export class App {
       this.showSuccess('Đã xóa tệp khỏi Lịch sử chuyển đổi.');
       await this.loadHistoryFromDb();
     } catch (err) {
-      console.error('Lỗi khi xóa lịch sử:', err);
+      this.logError('Lỗi khi xóa lịch sử:', err);
     }
   }
 
@@ -633,7 +641,7 @@ export class App {
       this.isParsing.set(false);
       this.parsingStatus.set('');
     } catch (err: any) {
-      console.error(err);
+      this.logError(err);
       this.apiError.set('Lỗi phân tích cú pháp tệp PDF: ' + (err.message || err));
       this.isParsing.set(false);
       this.parsingStatus.set('');
@@ -718,7 +726,7 @@ export class App {
       this.showSuccess(`Đã ráp nối thành công dữ liệu cho ${chunk.id}.`);
       await this.saveCurrentProgressToHistory();
     } catch (err: any) {
-      console.error(err);
+      this.logError(err);
       const translated = this.translateGeminiError(err.message || err);
       this.apiError.set(translated);
       this.pdfChunks.update(cs => {
@@ -800,7 +808,7 @@ export class App {
         this.selectedTab.set('reflow');
       }
     } catch (err: any) {
-      console.error(err);
+      this.logError(err);
       this.apiError.set(this.translateGeminiError(err.message || err));
     } finally {
       this.isBatchProcessing.set(false);
@@ -828,7 +836,7 @@ export class App {
       this.selectedChunkIndex.set(chunkIndex);
       await this.executeChunkOptimization(chunkIndex);
     } catch (err: any) {
-      console.error(err);
+      this.logError(err);
       const translated = this.translateGeminiError(err.message || err);
       this.apiError.set(translated);
       this.pdfChunks.update(cs => {
@@ -878,7 +886,7 @@ export class App {
       URL.revokeObjectURL(url);
       this.showSuccess('Tải tệp tin sách EPUB (.epub) thành công! Sách bọc đầy đủ hình ảnh và nhãn cấu trúc.');
     } catch (err: any) {
-      console.error(err);
+      this.logError(err);
       this.apiError.set('Lỗi biên dịch tệp EPUB: ' + err.message);
     } finally {
       this.isParsing.set(false);
@@ -919,7 +927,7 @@ export class App {
       URL.revokeObjectURL(url);
       this.showSuccess('Tải tệp tài liệu Word (.docx) thành công! Bạn có thể chỉnh sửa trực tiếp tệp này trên Microsoft Word hoặc Google Docs.');
     } catch (err: any) {
-      console.error(err);
+      this.logError(err);
       this.apiError.set('Lỗi biên dịch tệp Word: ' + err.message);
     } finally {
       this.isParsing.set(false);

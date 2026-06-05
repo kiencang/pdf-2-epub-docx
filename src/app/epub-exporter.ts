@@ -51,7 +51,6 @@ export class EpubExporter {
   <link rel="stylesheet" type="text/css" href="stylesheet.css"/>
 </head>
 <body>
-  <h1>${title}</h1>
   ${xhtmlContent}
 </body>
 </html>`);

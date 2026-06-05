@@ -252,23 +252,6 @@ export class DocxExporter {
 
     const children: any[] = [];
 
-    // Title Block
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: title,
-            bold: true,
-            size: 48, // 24pt
-            color: "1F497D", // Corporate Blue Accent
-            font: "Segoe UI",
-          }),
-        ],
-        spacing: { before: 0, after: 360 },
-        alignment: AlignmentType.CENTER,
-      })
-    );
-
     const lines = markdownContent.split('\n');
     let idx = 0;
 

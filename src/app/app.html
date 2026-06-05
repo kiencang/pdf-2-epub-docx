@@ -14,31 +14,12 @@
   </app-header>
 
   <!-- Toast notifications -->
-  <div class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 items-end pointer-events-none">
-    @if (apiError()) {
-      <div class="pointer-events-auto bg-slate-900 border border-rose-500/30 text-rose-300 px-4 py-3 rounded-xl shadow-2xl flex items-center justify-between gap-4 animate-fade-in max-w-sm">
-        <div class="flex items-center gap-2.5">
-          <mat-icon class="text-rose-400 shrink-0 text-[20px] w-5 h-5 leading-[20px] flex items-center justify-center">error_outline</mat-icon>
-          <span class="font-sans text-sm leading-snug">{{ apiError() }}</span>
-        </div>
-        <button (click)="apiError.set('')" class="text-rose-300 hover:text-white shrink-0 outline-none flex items-center justify-center cursor-pointer">
-          <mat-icon class="text-[18px] w-[18px] h-[18px] leading-[18px] flex">close</mat-icon>
-        </button>
-      </div>
-    }
-
-    @if (successMessage()) {
-      <div class="pointer-events-auto bg-slate-900 border border-emerald-500/30 text-emerald-300 px-4 py-3 rounded-xl shadow-2xl flex items-center justify-between gap-4 animate-fade-in max-w-sm">
-        <div class="flex items-center gap-2.5">
-          <mat-icon class="text-emerald-400 shrink-0 text-[20px] w-5 h-5 leading-[20px] flex items-center justify-center">check_circle_outline</mat-icon>
-          <span class="font-sans text-sm leading-snug">{{ successMessage() }}</span>
-        </div>
-        <button (click)="showSuccess('')" class="text-emerald-300 hover:text-white shrink-0 outline-none flex items-center justify-center cursor-pointer">
-          <mat-icon class="text-[18px] w-[18px] h-[18px] leading-[18px] flex">close</mat-icon>
-        </button>
-      </div>
-    }
-  </div>
+  <app-toast-notification
+    [apiError]="apiError()"
+    [successMessage]="successMessage()"
+    (clearError)="apiError.set('')"
+    (clearSuccess)="showSuccess('')">
+  </app-toast-notification>
 
   <!-- Main Body -->
   <main class="flex-1 flex flex-col md:flex-row min-h-0">
