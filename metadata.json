@@ -1,6 +1,6 @@
 {
-  "name": "Remix: PDF-2-EPUB",
-  "description": "Ứng dụng chuyển đổi tệp PDF sang EPUB, trích xuất hình ảnh phía client và tối ưu hóa bố cục thông minh bằng AI.",
+  "name": "PDF-2-EPUB-DOCX",
+  "description": "Ứng dụng chuyển đổi tệp PDF sang EPUB và DOCX, trích xuất hình ảnh phía client và tối ưu hóa bố cục thông minh bằng AI.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

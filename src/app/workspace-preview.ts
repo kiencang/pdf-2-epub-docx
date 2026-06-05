@@ -25,7 +25,7 @@ import { SafeHtml } from '@angular/platform-browser';
             [class.text-slate-400]="selectedTab() !== 'pdf'"
             [class.hover:text-slate-200]="selectedTab() !== 'pdf'">
             <mat-icon class="text-xs">collections</mat-icon>
-            Ảnh & Bản Gốc (PDF)
+            Ảnh & Bản gốc
           </button>
           
           @if (reflowHtml()) {
@@ -38,7 +38,7 @@ import { SafeHtml } from '@angular/platform-browser';
               [class.text-slate-400]="selectedTab() !== 'reflow'"
               [class.hover:text-slate-200]="selectedTab() !== 'reflow'">
               <mat-icon class="text-xs">chrome_reader_mode</mat-icon>
-              Xem trước sách (Reflowed)
+              Xem trước
             </button>
             @if (isDevMode()) {
               <button 
@@ -50,7 +50,7 @@ import { SafeHtml } from '@angular/platform-browser';
                 [class.text-slate-400]="selectedTab() !== 'markdown'"
                 [class.hover:text-slate-200]="selectedTab() !== 'markdown'">
                 <mat-icon class="text-xs">text_snippet</mat-icon>
-                Mã Markdown (.md)
+                Markdown
               </button>
               <button 
                 (click)="tabChange.emit('source')"
@@ -61,21 +61,30 @@ import { SafeHtml } from '@angular/platform-browser';
                 [class.text-slate-400]="selectedTab() !== 'source'"
                 [class.hover:text-slate-200]="selectedTab() !== 'source'">
                 <mat-icon class="text-xs">code</mat-icon>
-                Mã HTML
+                HTML
               </button>
             }
           }
         </div>
 
-        <!-- Action Bar: Export EPUB -->
-        <div class="flex items-center gap-4 text-xs font-sans">
+        <!-- Action Bar: Export EPUB and Word -->
+        <div class="flex items-center gap-2 text-xs font-sans">
           @if (reflowHtml()) {
+            <button 
+              (click)="downloadDocx.emit()"
+              [disabled]="isParsing() || isOptimizing()"
+              title="Tải tài liệu Microsoft Word (.docx)"
+              class="py-2.5 px-3 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition shadow shadow-indigo-500/10 cursor-pointer focus:outline-none disabled:cursor-not-allowed shrink-0">
+              <mat-icon class="text-[18px] w-[18px] h-[18px] leading-[18px] flex items-center justify-center">description</mat-icon>
+              <span>Tài liệu Docx</span>
+            </button>
             <button 
               (click)="downloadEpub.emit()"
               [disabled]="isParsing() || isOptimizing()"
-              class="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition shadow shadow-emerald-500/10 cursor-pointer focus:outline-none disabled:cursor-not-allowed">
-              <mat-icon class="text-[18px] w-[18px] h-[18px] leading-[18px] flex items-center justify-center">file_download</mat-icon>
-              <span>Tải xuống file sách EPUB</span>
+              title="Tải sách điện tử định dạng EPUB 3"
+              class="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition shadow shadow-emerald-500/10 cursor-pointer focus:outline-none disabled:cursor-not-allowed shrink-0">
+              <mat-icon class="text-[18px] w-[18px] h-[18px] leading-[18px] flex items-center justify-center">book</mat-icon>
+              <span>Sách EPUB</span>
             </button>
           }
         </div>
@@ -201,6 +210,7 @@ export class WorkspacePreview {
   tabChange = output<'reflow' | 'pdf' | 'source' | 'markdown'>();
   themeStyleChange = output<'clean' | 'warm' | 'mono'>();
   downloadEpub = output<void>();
+  downloadDocx = output<void>();
   downloadMarkdown = output<void>();
   downloadHtml = output<void>();
   zoomImage = output<string>();

@@ -43,7 +43,7 @@ import { MatIconModule } from '@angular/material/icon';
             <div class="h-6 w-6 rounded-lg bg-indigo-600/25 border border-indigo-500/20 text-indigo-400 font-bold font-mono text-xs flex items-center justify-center shrink-0 mt-0.5">1</div>
             <div>
               <p class="font-bold text-slate-200 mb-0.5">Tải lên tài liệu PDF</p>
-              <p>Kéo thả trực tiếp tệp tin PDF hoặc nhấp chọn tệp từ máy tính. Ứng dụng sẽ tách các ảnh và văn bản từ tài liệu gốc để tái cấu trúc lại thành EPUB chuẩn.</p>
+              <p>Kéo thả trực tiếp tệp tin PDF hoặc nhấp chọn tệp từ máy tính. Ứng dụng sẽ tách các ảnh từ tài liệu gốc để chuẩn bị cho việc tái cấu trúc lại thành EPUB. Việc tách ảnh được thực hiện thông qua thiết bị của người dùng, giai đoạn này chưa dùng đến AI.</p>
             </div>
           </div>
 
@@ -51,7 +51,7 @@ import { MatIconModule } from '@angular/material/icon';
             <div class="h-6 w-6 rounded-lg bg-indigo-600/25 border border-indigo-500/20 text-indigo-400 font-bold font-mono text-xs flex items-center justify-center shrink-0 mt-0.5">2</div>
             <div>
               <p class="font-bold text-slate-200 mb-0.5">Nhập API Key</p>
-              <p>Bản cấu trúc thô từ tài liệu PDF (gồm văn bản chưa dàn trang, danh sách các ảnh) cần AI để ráp nối lại với nhau. Điền khóa API Key của bạn ở phần <code class="bg-slate-950 px-1 py-0.5 text-indigo-400 font-mono rounded">Nhập API Key</code> để xử lý việc này.</p>
+              <p>Bản cấu trúc gốc từ tài liệu PDF & các ảnh được trích xuất từ bước trước cần AI để ráp nối lại với nhau tạo thành dữ liệu hoàn chỉnh. Điền khóa API Key của bạn ở phần <code class="bg-slate-950 px-1 py-0.5 text-indigo-400 font-mono rounded">Nhập API Key</code> để xử lý công việc trong giai đoạn này.</p>
             </div>
           </div>
 

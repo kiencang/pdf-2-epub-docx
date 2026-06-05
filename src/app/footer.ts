@@ -9,33 +9,15 @@ import { CommonModule } from '@angular/common';
     <footer class="border-t border-white/5 bg-slate-950/60 py-3.5 px-6 shrink-0 z-10 w-full">
       <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-sans w-full cursor-default">
         
-        <!-- Left side: Dev mode toggle -->
-        <div class="flex items-center justify-center sm:justify-start gap-2 relative group w-full sm:flex-1 shrink-0">
-          @if (hasPages()) {
-            <span class="text-slate-400 font-medium">Dev</span>
-            <button type="button" 
-                    (click)="toggleDevMode.emit()" 
-                    [disabled]="isOptimizing() || isParsing()"
-                    class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                    [class.bg-indigo-500]="isDevMode()"
-                    [class.bg-slate-700]="!isDevMode()">
-              <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                    [class.translate-x-4]="isDevMode()"
-                    [class.translate-x-0]="!isDevMode()"></span>
-            </button>
-            <!-- Tooltip -->
-            <div class="absolute bottom-full left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-0 mb-3 hidden w-[250px] group-hover:block bg-slate-800 text-slate-100 text-[11px] px-3 py-2 rounded-lg shadow-xl border border-white/10 z-[100] text-center sm:text-left pointer-events-none">
-              Chỉ dành cho lập trình viên, bật để quan sát file markdown và file HTML
-              <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-6 w-2 h-2 bg-slate-800 border-b border-r border-white/10 transform rotate-45"></div>
-            </div>
-          }
+        <!-- Left side: Placeholder -->
+        <div class="flex items-center justify-center sm:justify-start w-full sm:flex-1 shrink-0">
         </div>
 
         <!-- Center side: Links -->
         <div class="flex flex-wrap justify-center items-center gap-2.5 sm:gap-4 shrink-0 text-slate-400 font-normal">
-          <span class="text-slate-400">v1.0.10</span>
+          <span class="text-slate-400">v1.0.11</span>
           <span class="text-slate-800 font-light text-xs select-none">•</span>
-          <a href="https://github.com/kiencang/pdf-2-epub" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors duration-200 cursor-pointer">GitHub</a>
+          <a href="https://github.com/kiencang/pdf-2-epub-docx" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors duration-200 cursor-pointer">GitHub</a>
           <span class="text-slate-800 font-light text-xs select-none">•</span>
           <span class="text-slate-200 font-semibold">Nguyễn Đức Anh</span>
           <span class="text-slate-800 font-light text-xs select-none">•</span>
@@ -46,8 +28,26 @@ import { CommonModule } from '@angular/common';
           </button>
         </div>
 
-        <!-- Right side: Placeholder -->
-        <div class="flex items-center justify-center sm:justify-end w-full sm:flex-1 shrink-0">
+        <!-- Right side: Dev mode toggle -->
+        <div class="flex items-center justify-center sm:justify-end gap-2 relative group w-full sm:flex-1 shrink-0">
+          @if (hasPages()) {
+            <span class="text-slate-400 font-medium select-none">Dev</span>
+            <button type="button" 
+                    (click)="toggleDevMode.emit()" 
+                    [disabled]="isOptimizing() || isParsing()"
+                    class="relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                    [class.bg-indigo-500]="isDevMode()"
+                    [class.bg-slate-700]="!isDevMode()">
+              <span class="pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                    [class.translate-x-3]="isDevMode()"
+                    [class.translate-x-0]="!isDevMode()"></span>
+            </button>
+            <!-- Tooltip -->
+            <div class="absolute bottom-full left-1/2 -translate-x-1/2 sm:translate-x-0 sm:right-0 sm:left-auto mb-3 hidden w-[250px] group-hover:block bg-slate-800 text-slate-100 text-[11px] px-3 py-2 rounded-lg shadow-xl border border-white/10 z-[100] text-center sm:text-left pointer-events-none">
+              Chỉ dành cho lập trình viên, bật để quan sát file markdown và file HTML.
+              <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 sm:translate-x-0 sm:right-2 sm:left-auto w-2 h-2 bg-slate-800 border-b border-r border-white/10 transform rotate-45"></div>
+            </div>
+          }
         </div>
         
       </div>

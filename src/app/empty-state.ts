@@ -52,7 +52,7 @@ import { MatIconModule } from '@angular/material/icon';
           @if (isParsing()) {
             {{ parsingStatus() || 'Hệ thống đang cấu trúc thông tin' }}
           } @else {
-            Ứng dụng sẽ tự động trích xuất hình ảnh, rồi chuyển tài liệu thành <strong>định dạng EPUB</strong> tiêu chuẩn.
+            Ứng dụng sẽ tự động trích xuất hình ảnh, rồi chuyển tài liệu thành <strong>định dạng EPUB và DOCX</strong>.
           }
         </p>
 

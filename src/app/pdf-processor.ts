@@ -5,6 +5,7 @@ import { PdfDb } from './pdf-db';
 import { ImageExtractor } from './image-extractor';
 import { MarkdownRenderer } from './markdown-renderer';
 import { EpubExporter } from './epub-exporter';
+import { DocxExporter } from './docx-exporter';
 
 export interface PdfPageData {
   pageNum: number;
@@ -133,5 +134,12 @@ export class PdfProcessor {
    */
   generateEpub(title: string, markdownContent: string, pdfPages: PdfPageData[]): Promise<Blob> {
     return EpubExporter.generateEpub(title, markdownContent, pdfPages);
+  }
+
+  /**
+   * DOCX Word generation delegation
+   */
+  generateDocx(title: string, markdownContent: string, pdfPages: PdfPageData[]): Promise<Blob> {
+    return DocxExporter.generateDocx(title, markdownContent, pdfPages);
   }
 }

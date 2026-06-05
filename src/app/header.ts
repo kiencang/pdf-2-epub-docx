@@ -15,7 +15,7 @@ import { MatIconModule } from '@angular/material/icon';
           </div>
         </div>
         <div>
-          <h1 class="text-lg font-bold tracking-tight font-sans bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">PDF-2-EPUB</h1>
+          <h1 class="text-lg font-bold tracking-tight font-sans bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">PDF-2-EPUB-DOCX</h1>
         </div>
 
         <!-- Cool Model Switch Toggle -->
@@ -80,7 +80,7 @@ import { MatIconModule } from '@angular/material/icon';
             <mat-icon class="!text-[13.5px] !w-3.5 !h-3.5 flex items-center justify-center leading-none">history</mat-icon>
             <span>Lịch sử chuyển đổi</span>
             @if (historyCount() > 0) {
-              <span class="ml-0.5 bg-indigo-500 text-white text-[9.5px] leading-none px-1 py-0.5 rounded-full font-semibold">
+              <span class="bg-indigo-500 text-white text-[9px] min-w-[16px] h-4 flex items-center justify-center rounded-full font-semibold px-1 select-none leading-none">
                 {{ historyCount() }}
               </span>
             }
