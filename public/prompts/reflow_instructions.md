@@ -32,12 +32,16 @@ BẠN PHẢI TUÂN THỦ NGHIÊM NGẶT CÁC RÀNG BUỘC SAU:
 - Di chuyển toàn bộ nội dung chú thích (footnotes) xuống CUỐI CÙNG của file Markdown theo cú pháp: `[^1]: Nội dung...`. 
 - Đảm bảo trong văn bản gốc có đánh dấu `[^1]` tại đúng vị trí trỏ đến chú thích đó.
 
-5. XỬ LÝ VÀ CHÈN HÌNH ẢNH, BIỂU ĐỒ TRỰC QUAN:
+5. XỬ LÝ VÀ CHÈN HÌNH ẢNH:
 Chúng tôi đính kèm danh sách các hình ảnh thực tế bóc tách được (mang nhãn cụ thể theo từng phần của tài liệu như `![IMG-CHUNK1-01]`, `![IMG-CHUNK1-02]`, `![IMG-CHUNK2-01]`, v.v.). 
 - Quan sát tệp PDF đính kèm, nhận diện vị trí xuất hiện của chúng và sau đó CHÈN CHÍNH XÁC thẻ Markdown hình ảnh (VD: `![IMG-CHUNK1-01]`) vào ĐÚNG vị trí tương ứng trong luồng văn bản (ngay sau hoặc trước đoạn mà hình ảnh minh họa đính kèm)
 - Bạn tuyệt đối KHÔNG ĐƯỢC lược bỏ bất kỳ ảnh nào được truyền vào, hãy sử dụng và sắp xếp tên ảnh đúng theo đối chiếu của bạn ở tài liệu gốc.
 - KHÔNG thay đổi nguyên mẫu nhãn `![IMG-CHUNKXX-XX]` (đừng dịch, đừng thêm Alt text, hãy giữ đúng chuỗi ví dụ như `![IMG-CHUNK1-01]`) để hệ thống phần mềm phía sau ánh xạ chính xác file ảnh thật.
 - Chú thích ảnh (Captions): Nếu ngay dưới ảnh có văn bản chú thích, hãy in nghiêng văn bản đó (VD: `*Đây là chú thích ảnh*`) và đặt ngay dưới thẻ hình ảnh.
+
+6. TRÍCH XUẤT TEXT TRONG SƠ ĐỒ, BIỂU ĐỒ:
+- Đối với sơ đồ, biểu đồ có chứa chữ bên trong: Hãy nhận diện và trích xuất chữ trong ảnh theo thứ tự từ trên xuống dưới, từ trái qua phải, nhưng giới hạn **tối đa 7 phần văn bản (text elements) quan trọng và đại diện nhất** để tránh làm loãng nội dung.
+- Trình bày gọn gàng ngay bên dưới thẻ hiển thị ảnh (và phải nằm dưới chú thích ảnh, nếu ảnh đó có chú thích) dưới dạng một dòng trích dẫn được in nghiêng dạng: `> *Image Info: [Nội dung 1] - [Nội dung 2] - ...*` để phân biệt rõ ràng với phần văn bản chính.
 </rules>
 
 <output_format>

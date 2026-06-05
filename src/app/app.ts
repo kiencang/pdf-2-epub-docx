@@ -884,7 +884,7 @@ export class App {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      this.showSuccess('Tải tệp tin sách EPUB (.epub) thành công! Sách bọc đầy đủ hình ảnh và nhãn cấu trúc.');
+      this.showSuccess('Tải tệp sách định dạng EPUB (.epub) thành công!');
     } catch (err: any) {
       this.logError(err);
       this.apiError.set('Lỗi biên dịch tệp EPUB: ' + err.message + '.');
