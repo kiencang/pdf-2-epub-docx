@@ -15,12 +15,16 @@ import { MatIconModule } from '@angular/material/icon';
       <!-- Drag or Select Card -->
       <div 
         role="button"
-        tabindex="0"
+        [attr.aria-disabled]="isParsing() ? 'true' : null"
+        [tabindex]="isParsing() ? -1 : 0"
         (dragover)="onDragOver($event)"
         (drop)="onFileDropped($event)"
-        (click)="fileInput.click()"
-        (keydown.enter)="fileInput.click()"
-        class="w-full max-w-lg bg-slate-950 border-2 border-dashed border-white/10 hover:border-indigo-500/50 rounded-3xl p-10 md:p-14 transition-all duration-300 shadow-2xl flex flex-col items-center group cursor-pointer">
+        (click)="!isParsing() && fileInput.click()"
+        (keydown.enter)="!isParsing() && fileInput.click()"
+        class="w-full max-w-lg bg-slate-950 border-2 border-dashed border-white/10 rounded-3xl p-10 md:p-14 transition-all duration-300 shadow-2xl flex flex-col items-center group select-none"
+        [class.hover:border-indigo-500/50]="!isParsing()"
+        [class.cursor-pointer]="!isParsing()"
+        [class.cursor-not-allowed]="isParsing()">
         
         <input 
           #fileInput 
@@ -29,43 +33,57 @@ import { MatIconModule } from '@angular/material/icon';
           (change)="onFileSelected($event)" 
           class="hidden" />
 
-        <div class="h-28 w-28 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 group-hover:scale-105 group-hover:bg-indigo-500/20 group-hover:text-indigo-300 transition-all duration-300 mb-4 border border-indigo-500/10">
-          @if (isParsing()) {
-            <mat-icon class="text-4xl w-9 h-9 text-[36px] leading-[36px] animate-spin">sync</mat-icon>
-          } @else {
-            <mat-icon class="w-16 h-16 text-[64px] leading-[64px]">cloud_upload</mat-icon>
-          }
+        <!-- Disable pointer events on all elements within the card when in parsing state -->
+        <div class="w-full flex flex-col items-center" [class.pointer-events-none]="isParsing()">
+          <div class="h-28 w-28 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 transition-all duration-300 mb-4 border border-indigo-500/10"
+               [class.group-hover:scale-105]="!isParsing()"
+               [class.group-hover:bg-indigo-500/20]="!isParsing()"
+               [class.group-hover:text-indigo-300]="!isParsing()">
+            @if (isParsing()) {
+              <mat-icon class="text-4xl w-9 h-9 text-[36px] leading-[36px] animate-spin">sync</mat-icon>
+            } @else {
+              <mat-icon class="w-16 h-16 text-[64px] leading-[64px]">cloud_upload</mat-icon>
+            }
+          </div>
+
+          <!-- Stable Header slot (height fixed) -->
+          <div class="h-6 mb-2 flex items-center justify-center">
+            @if (isParsing()) {
+              <h2 class="text-sm font-semibold tracking-tight font-sans text-slate-100 text-center leading-none animate-pulse">
+                Đang phân tích cú pháp dữ liệu...
+              </h2>
+            } @else {
+              <span class="text-[11px] font-sans font-medium text-slate-500 text-center uppercase tracking-wider select-none">
+                [Tối đa: 50MB / 500 trang]
+              </span>
+            }
+          </div>
+
+          <!-- Stable Description slot (height fixed) -->
+          <div class="min-h-[44px] flex items-center justify-center mb-8 max-w-sm mx-auto">
+            <p class="text-sm text-slate-400 font-sans text-center leading-relaxed">
+              @if (isParsing()) {
+                <span class="text-indigo-300 font-medium">{{ parsingStatus() || 'Hệ thống đang cấu trúc thông tin' }}</span>
+              } @else {
+                Ứng dụng sẽ tự động trích xuất hình ảnh, rồi chuyển tài liệu thành <strong>định dạng EPUB và DOCX</strong>.
+              }
+            </p>
+          </div>
+
+          <!-- Stable Action slot (height fixed) -->
+          <div class="h-[54px] w-full flex items-center justify-center">
+            @if (!isParsing()) {
+              <span class="px-8 py-3.5 flex items-center gap-2 text-base font-semibold bg-indigo-600 hover:bg-indigo-500 rounded-lg transition shadow-lg shadow-indigo-600/10 font-sans text-white select-none">
+                <mat-icon class="text-[20px] w-5 h-5 leading-[20px]">description</mat-icon>
+                Chọn tệp tin PDF
+              </span>
+            } @else {
+              <div class="w-full bg-slate-900 rounded-full h-1.5 max-w-xs overflow-hidden border border-white/5 mx-auto">
+                <div class="bg-indigo-500 h-1.5 rounded-full animate-pulse-width" style="width: 75%"></div>
+              </div>
+            }
+          </div>
         </div>
-
-        @if (!isParsing()) {
-          <div class="text-[11px] font-sans font-medium text-slate-500 mb-6 text-center">
-            [Tối đa: 50MB / 500 trang]
-          </div>
-        }
-
-        @if (isParsing()) {
-          <h2 class="text-sm font-semibold tracking-tight mb-2 font-sans text-slate-100 text-center leading-snug">
-            Đang phân tích cú pháp dữ liệu...
-          </h2>
-        }
-        <p class="text-sm text-slate-400 mb-6 max-w-sm font-sans text-center leading-relaxed">
-          @if (isParsing()) {
-            {{ parsingStatus() || 'Hệ thống đang cấu trúc thông tin' }}
-          } @else {
-            Ứng dụng sẽ tự động trích xuất hình ảnh, rồi chuyển tài liệu thành <strong>định dạng EPUB và DOCX</strong>.
-          }
-        </p>
-
-        @if (!isParsing()) {
-          <span class="px-8 py-3.5 flex items-center gap-2 text-base font-semibold bg-indigo-600 hover:bg-indigo-500 rounded-lg transition shadow-lg shadow-indigo-600/10 font-sans text-white">
-            <mat-icon class="text-[20px] w-5 h-5 leading-[20px]">description</mat-icon>
-            Chọn tệp tin PDF
-          </span>
-        } @else {
-          <div class="w-full bg-slate-900 rounded-full h-1.5 max-w-xs mt-4 overflow-hidden border border-white/5">
-            <div class="bg-indigo-500 h-1.5 rounded-full animate-pulse-width" style="width: 75%"></div>
-          </div>
-        }
       </div>
 
     </div>
@@ -86,6 +104,7 @@ export class EmptyState {
   onFileDropped(event: DragEvent) {
     event.preventDefault();
     event.stopPropagation();
+    if (this.isParsing()) return;
     if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
       const file = event.dataTransfer.files[0];
       if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {

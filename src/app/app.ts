@@ -198,13 +198,13 @@ export class App {
     }
     this.updateApiKey(trimmed);
     this.showApiKeyModal.set(false);
-    this.showSuccess('Đã cấu hình API Key thành công!');
+    this.showSuccess('Đã cấu hình API Key thành công.');
   }
 
   clearApiKeyModal() {
     this.updateApiKey('');
     this.showApiKeyModal.set(false);
-    this.showSuccess('Đã xóa cấu hình API Key cá nhân!');
+    this.showSuccess('Đã xóa cấu hình API Key cá nhân.');
   }
 
   /**
@@ -350,10 +350,10 @@ export class App {
       }
 
       this.showHistoryModal.set(false);
-      this.showSuccess('Đã khôi phục lịch sử chuyển đổi!');
+      this.showSuccess('Đã khôi phục lịch sử chuyển đổi.');
     } catch (err: any) {
       this.logError('Lỗi khôi phục lịch sử:', err);
-      this.apiError.set('Không thể khôi phục lịch sử chuyển đổi: ' + err.message);
+      this.apiError.set('Không thể khôi phục lịch sử chuyển đổi: ' + err.message + '.');
     } finally {
       this.isParsing.set(false);
       this.parsingStatus.set('');
@@ -463,7 +463,7 @@ export class App {
    */
   async processPdfFile(file: File) {
     if (!this.isScriptLoaded() || !this.pdfProcessor.getPdfjsLib()) {
-      this.apiError.set('Thư viện PDF.js đang được nạp, xin hãy đợi một giây rồi thử lại!');
+      this.apiError.set('Thư viện PDF.js đang được nạp, xin hãy đợi một giây rồi thử lại.');
       return;
     }
 
@@ -490,7 +490,7 @@ export class App {
     this.currentHistoryId.set(newHistoryId);
 
     if (isDuplicate) {
-      this.showSuccess('Chúng tôi thấy file này bạn đã từng up lên, và vẫn còn trong Lịch sử chuyển đổi');
+      this.showSuccess('Chúng tôi thấy file này bạn đã từng up lên, và vẫn còn trong Lịch sử chuyển đổi.');
     }
 
     try {
@@ -618,31 +618,31 @@ export class App {
       }
 
       this.pdfChunks.set(generatedChunks);
-
-      this.parsingStatus.set('Đang thiết lập bản gốc...');
-
-      // Save initial state to Conversion History
-      if (this.currentHistoryId()) {
-        const historyItem = {
-          id: this.currentHistoryId(),
-          fileName: file.name,
-          fileSize: this.pdfProcessor.formatBytes(file.size),
-          timestamp: Date.now(),
-          pdfPages: itemsExtracted,
-          pdfChunks: generatedChunks,
-          selectedChunkIndex: 0,
-          pdfFileBlob: file
-        };
-        await this.saveHistoryItemAndTrim(historyItem);
-      }
-
-      this.selectedTab.set('pdf');
-      this.showSuccess('Đã trích xuất ảnh thành công từ file PDF');
-      this.isParsing.set(false);
+ 
+       this.parsingStatus.set('Đang thiết lập bản gốc...');
+ 
+       // Save initial state to Conversion History
+       if (this.currentHistoryId()) {
+         const historyItem = {
+           id: this.currentHistoryId(),
+           fileName: file.name,
+           fileSize: this.pdfProcessor.formatBytes(file.size),
+           timestamp: Date.now(),
+           pdfPages: itemsExtracted,
+           pdfChunks: generatedChunks,
+           selectedChunkIndex: 0,
+           pdfFileBlob: file
+         };
+         await this.saveHistoryItemAndTrim(historyItem);
+       }
+ 
+       this.selectedTab.set('pdf');
+       this.showSuccess('Đã phân tích file PDF thành công.');
+       this.isParsing.set(false);
       this.parsingStatus.set('');
     } catch (err: any) {
       this.logError(err);
-      this.apiError.set('Lỗi phân tích cú pháp tệp PDF: ' + (err.message || err));
+      this.apiError.set('Lỗi phân tích cú pháp tệp PDF: ' + (err.message || err) + '.');
       this.isParsing.set(false);
       this.parsingStatus.set('');
     }
@@ -771,7 +771,7 @@ export class App {
       .map(item => item.idx);
 
     if (pendingIndices.length === 0) {
-      this.showSuccess('Tất cả các khối đã hoàn thành xử lý!');
+      this.showSuccess('Tất cả các khối đã hoàn thành xử lý.');
       return;
     }
 
@@ -804,7 +804,7 @@ export class App {
       const updatedChunks = this.pdfChunks();
       const allDoneNow = updatedChunks.every(c => c.status === 'completed');
       if (allDoneNow && !this.shouldStopBatch()) {
-        this.showSuccess('Hoàn thành xử lý tất cả các phần thành công!');
+        this.showSuccess('Hoàn thành xử lý tất cả các phần thành công.');
         this.selectedTab.set('reflow');
       }
     } catch (err: any) {
@@ -887,7 +887,7 @@ export class App {
       this.showSuccess('Tải tệp tin sách EPUB (.epub) thành công! Sách bọc đầy đủ hình ảnh và nhãn cấu trúc.');
     } catch (err: any) {
       this.logError(err);
-      this.apiError.set('Lỗi biên dịch tệp EPUB: ' + err.message);
+      this.apiError.set('Lỗi biên dịch tệp EPUB: ' + err.message + '.');
     } finally {
       this.isParsing.set(false);
       this.parsingStatus.set('');
@@ -928,7 +928,7 @@ export class App {
       this.showSuccess('Tải tệp tài liệu Word (.docx) thành công! Bạn có thể chỉnh sửa trực tiếp tệp này trên Microsoft Word hoặc Google Docs.');
     } catch (err: any) {
       this.logError(err);
-      this.apiError.set('Lỗi biên dịch tệp Word: ' + err.message);
+      this.apiError.set('Lỗi biên dịch tệp Word: ' + err.message + '.');
     } finally {
       this.isParsing.set(false);
       this.parsingStatus.set('');
@@ -961,7 +961,7 @@ export class App {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    this.showSuccess('Đã tải tệp Markdown (.md) thành công!');
+    this.showSuccess('Đã tải tệp Markdown (.md) thành công.');
   }
 
   /**
