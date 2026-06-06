@@ -108,7 +108,7 @@ import { SafeHtml } from '@angular/platform-browser';
       </div>
 
       <!-- Preview Content Canvas Window -->
-      <div class="flex-grow overflow-y-auto p-4 md:p-8 flex justify-center">
+      <div class="flex-grow overflow-y-auto px-4 pt-4 pb-6 md:px-8 md:pt-5 md:pb-8 flex justify-center">
         
         <!-- Reflow modern article Tab container -->
         @if (selectedTab() === 'reflow') {
@@ -151,13 +151,13 @@ import { SafeHtml } from '@angular/platform-browser';
 
         <!-- Canvas View (Original exact PDF page renders) -->
         @if (selectedTab() === 'pdf') {
-          <div class="w-full max-w-3xl flex flex-col gap-4" id="pdf-scroller-layout">
-            <div class="text-center py-3 text-xs text-slate-400 uppercase font-mono tracking-widest block bg-slate-900 border border-white/5 rounded-2xl font-sans shrink-0">
+          <div class="w-full max-w-3xl flex flex-col" id="pdf-scroller-layout">
+            <div class="text-center py-1.5 mb-3 text-xs text-slate-400 uppercase font-mono tracking-widest block bg-slate-900 border border-white/5 rounded-xl font-sans shrink-0">
               Ảnh trích xuất từ tài liệu gốc (Bấm vào từng ảnh bên dưới để coi chi tiết)
             </div>
             
             <!-- Bounded height scrollable container with customized scrollbar styling -->
-            <div class="max-h-[62vh] overflow-y-auto pr-3 flex flex-col gap-5">
+            <div class="max-h-[66vh] overflow-y-auto pr-3 flex flex-col gap-5">
               <!-- Page renders -->
               @for (page of (activeChunk()?.pages || []); track page.pageNum) {
                 <div class="border border-white/10 rounded-2xl overflow-hidden bg-slate-950 shadow-md p-4 space-y-4 shrink-0">

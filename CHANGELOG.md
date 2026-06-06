@@ -9,6 +9,7 @@ và dự án này tuân thủ [Semantic Versioning](https://semver.org/spec/v2.0
 ### Fixed
 - Điều chỉnh nhẹ giao diện;
 - Tinh chỉnh một chút prompt (bổ sung ghi chú tiếng Anh cho cụm từ sơ đồ, biểu đồ);
+- Khắc phục lỗi không build được lên Cloudlfare;
 
 ## [v1.0.16]- 2026-06-05
 ### Fixed

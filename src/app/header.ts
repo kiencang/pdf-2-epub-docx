@@ -83,7 +83,7 @@ import { MatIconModule } from '@angular/material/icon';
             (click)="openHistory.emit()"
             [disabled]="isOptimizing() || isParsing()"
             class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-white/5 rounded-full font-medium transition-colors cursor-pointer focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none">
-            <mat-icon class="!text-[13.5px] !w-3.5 !h-3.5 flex items-center justify-center leading-none">history</mat-icon>
+            <mat-icon class="!text-[15px] !w-[15px] !h-[15px] leading-none flex items-center justify-center -mt-[1px]">history</mat-icon>
             <span>Lịch sử chuyển đổi</span>
             @if (historyCount() > 0) {
               <span class="bg-indigo-500 text-white text-[9px] min-w-[16px] h-4 flex items-center justify-center rounded-full font-semibold px-1 select-none leading-none">
