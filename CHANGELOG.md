@@ -5,6 +5,11 @@ Tất cả những thay đổi đáng chú ý của dự án kiencang/Book-silaT
 Định dạng dựa trên [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 và dự án này tuân thủ [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.18]- 2026-06-06
+### Fixed
+- Thay đổi title index mặc định về tên công cụ;
+- Điều chỉnh thông tin chính thức địa chỉ công cụ;
+
 ## [v1.0.17]- 2026-06-06
 ### Fixed
 - Điều chỉnh nhẹ giao diện;

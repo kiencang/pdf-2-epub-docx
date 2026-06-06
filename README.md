@@ -3,6 +3,8 @@ Công cụ này trích xuất ảnh trong file PDF, sau đó dùng AI để chuy
 
 Công cụ hoạt động tốt hơn với model Flash, với model Lite, cũng hoạt động ổn trong đa số trường hợp.
 
+Link app để Remix về trên AI Studio, nhằm tận dụng API Key miễn phí: https://aistudio.google.com/apps/9a11586a-e712-4c10-a1b6-751ab78fc10b?showAssistant=true&showCode=true
+
 ## Tuyên bố từ chối trách nhiệm
 Công cụ này chỉ nên sử dụng cho mục đích nghiên cứu và học tập cá nhân.
 

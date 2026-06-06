@@ -41,7 +41,7 @@ import { MatIconModule } from '@angular/material/icon';
         <div class="space-y-6">
           <!-- Description -->
           <p class="text-xs text-slate-300 leading-relaxed font-sans">
-            Để sử dụng công cụ chuyển đổi này bạn cần khóa API Key của Gemini. Bạn hãy vào link "Nơi lấy API Key Gemini" để thao tác. Key miễn phí chỉ có hiệu lực nếu bạn dùng ứng dụng qua AI Studio, với ai dùng trên pdf-2-epub.wpsila.com, chỉ Key trả phí mới dùng được. Hãy <a href="https://aistudio.google.com/apps/9a11586a-e712-4c10-a1b6-751ab78fc10b?showPreview=true&showAssistant=true" target="_blank" rel="noopener noreferrer" class="text-indigo-400 hover:text-indigo-300 hover:underline">remix ứng dụng trên AI Studio</a> để dùng miễn phí.
+            Để sử dụng công cụ chuyển đổi này bạn cần khóa API Key của Gemini. Bạn hãy vào link "Nơi lấy API Key Gemini" để thao tác. Key miễn phí chỉ có hiệu lực nếu bạn dùng ứng dụng qua AI Studio, với ai dùng trên pdf-2-epub-docx.wpsila.com, chỉ Key trả phí mới dùng được. Hãy <a href="https://aistudio.google.com/apps/9a11586a-e712-4c10-a1b6-751ab78fc10b?showPreview=true&showAssistant=true" target="_blank" rel="noopener noreferrer" class="text-indigo-400 hover:text-indigo-300 hover:underline">remix ứng dụng trên AI Studio</a> để dùng miễn phí.
           </p>
 
           <div class="flex justify-center pb-2">
