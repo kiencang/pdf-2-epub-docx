@@ -5,6 +5,11 @@ Tất cả những thay đổi đáng chú ý của dự án kiencang/Book-silaT
 Định dạng dựa trên [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 và dự án này tuân thủ [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.19]- 2026-06-06
+### Fixed
+- Điều chỉnh lại prompt chuyển PDF thành markdown để nó có chất lượng ổn định hơn (đầu ra thống nhất hơn);
+- Điều chỉnh cách phân tích để xử lý in đậm, in nghiêng lồng nhau trong markdown để chuyển đổi thành docx chính xác hơn;
+
 ## [v1.0.18]- 2026-06-06
 ### Fixed
 - Thay đổi title index mặc định về tên công cụ;

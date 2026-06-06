@@ -35,132 +35,230 @@ interface InlineToken {
   code: boolean;
 }
 
-export function tokenizeInline(text: string): InlineToken[] {
-  const parts: InlineToken[] = [];
-  let index = 0;
+function isAlphanumeric(char: string | undefined): boolean {
+  if (!char) return false;
+  return /[\p{L}\p{N}]/u.test(char);
+}
 
-  while (index < text.length) {
-    // Check for inline code
-    if (text.startsWith('`', index)) {
-      const end = text.indexOf('`', index + 1);
-      if (end !== -1) {
-        parts.push({
-          text: text.substring(index + 1, end),
-          bold: false,
-          italic: false,
-          code: true
-        });
-        index = end + 1;
-        continue;
+function parseRecursive(
+  s: string,
+  bold: boolean,
+  italic: boolean,
+  code: boolean
+): InlineToken[] {
+  if (!s) return [];
+
+  if (code) {
+    return [{ text: s, bold, italic, code }];
+  }
+
+  let bestMatch: {
+    tag: string;
+    start: number;
+    end: number;
+    inner: string;
+    nextBold: boolean;
+    nextItalic: boolean;
+    nextCode: boolean;
+  } | null = null;
+
+  for (let i = 0; i < s.length; i++) {
+    const char = s[i];
+
+    const isWhitespace = (ch: string | undefined) => !ch || ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r';
+
+    // 1. Inline code: `text`
+    if (char === '`') {
+      const openerValid = !isWhitespace(s[i + 1]);
+      if (openerValid) {
+        const closerIdx = s.indexOf('`', i + 1);
+        if (closerIdx !== -1) {
+          const closerValid = !isWhitespace(s[closerIdx - 1]);
+          if (closerValid) {
+            bestMatch = {
+              tag: '`',
+              start: i,
+              end: closerIdx,
+              inner: s.substring(i + 1, closerIdx),
+              nextBold: bold,
+              nextItalic: italic,
+              nextCode: true
+            };
+            break;
+          }
+        }
       }
     }
 
-    // Check for bold-italic combined: ***text***
-    if (text.startsWith('***', index)) {
-      const end = text.indexOf('***', index + 3);
-      if (end !== -1) {
-        parts.push({
-          text: text.substring(index + 3, end),
-          bold: true,
-          italic: true,
-          code: false
-        });
-        index = end + 3;
-        continue;
+    // 2. Bold-Italic: ***text***
+    if (s.startsWith('***', i)) {
+      const openerValid = !isWhitespace(s[i + 3]);
+      if (openerValid) {
+        let closerIdx = -1;
+        for (let k = i + 3; k <= s.length - 3; k++) {
+          if (s.startsWith('***', k)) {
+            closerIdx = k;
+            break;
+          }
+        }
+        if (closerIdx !== -1) {
+          const closerValid = !isWhitespace(s[closerIdx - 1]);
+          if (closerValid) {
+            bestMatch = {
+              tag: '***',
+              start: i,
+              end: closerIdx + 2,
+              inner: s.substring(i + 3, closerIdx),
+              nextBold: true,
+              nextItalic: true,
+              nextCode: code
+            };
+            break;
+          }
+        }
       }
     }
 
-    // Check for bold: **text**
-    if (text.startsWith('**', index)) {
-      const end = text.indexOf('**', index + 2);
-      if (end !== -1) {
-        parts.push({
-          text: text.substring(index + 2, end),
-          bold: true,
-          italic: false,
-          code: false
-        });
-        index = end + 2;
-        continue;
+    // 3. Bold: **text**
+    if (s.startsWith('**', i)) {
+      const openerValid = !isWhitespace(s[i + 2]);
+      if (openerValid) {
+        let closerIdx = -1;
+        for (let k = i + 2; k <= s.length - 2; k++) {
+          if (s.startsWith('**', k) && !s.startsWith('***', k)) {
+            closerIdx = k;
+            break;
+          }
+        }
+        if (closerIdx !== -1) {
+          const closerValid = !isWhitespace(s[closerIdx - 1]);
+          if (closerValid) {
+            bestMatch = {
+              tag: '**',
+              start: i,
+              end: closerIdx + 1,
+              inner: s.substring(i + 2, closerIdx),
+              nextBold: true,
+              nextItalic: italic,
+              nextCode: code
+            };
+            break;
+          }
+        }
       }
     }
 
-    // Check for bold underline / underscore bold
-    if (text.startsWith('__', index)) {
-      const end = text.indexOf('__', index + 2);
-      if (end !== -1) {
-        parts.push({
-          text: text.substring(index + 2, end),
-          bold: true,
-          italic: false,
-          code: false
-        });
-        index = end + 2;
-        continue;
+    // 4. Bold Underscore: __text__
+    if (s.startsWith('__', i)) {
+      const openerValid = !isWhitespace(s[i + 2]) && !isAlphanumeric(s[i - 1]);
+      if (openerValid) {
+        let closerIdx = -1;
+        for (let k = i + 2; k <= s.length - 2; k++) {
+          if (s.startsWith('__', k)) {
+            const closerValid = !isWhitespace(s[k - 1]) && !isAlphanumeric(s[k + 2]);
+            if (closerValid) {
+              closerIdx = k;
+              break;
+            }
+          }
+        }
+        if (closerIdx !== -1) {
+          bestMatch = {
+            tag: '__',
+            start: i,
+            end: closerIdx + 1,
+            inner: s.substring(i + 2, closerIdx),
+            nextBold: true,
+            nextItalic: italic,
+            nextCode: code
+          };
+          break;
+        }
       }
     }
 
-    // Check for italic: *text*
-    if (text.startsWith('*', index)) {
-      const end = text.indexOf('*', index + 1);
-      if (end !== -1) {
-        parts.push({
-          text: text.substring(index + 1, end),
-          bold: false,
-          italic: true,
-          code: false
-        });
-        index = end + 1;
-        continue;
+    // 5. Italic: *text*
+    if (char === '*' && !s.startsWith('**', i) && !s.startsWith('***', i)) {
+      const openerValid = !isWhitespace(s[i + 1]);
+      if (openerValid) {
+        let closerIdx = -1;
+        for (let k = i + 1; k < s.length; k++) {
+          if (s[k] === '*' && !s.startsWith('**', k) && !s.startsWith('***', k - 1)) {
+            const closerValid = !isWhitespace(s[k - 1]);
+            if (closerValid) {
+              closerIdx = k;
+              break;
+            }
+          }
+        }
+        if (closerIdx !== -1) {
+          bestMatch = {
+            tag: '*',
+            start: i,
+            end: closerIdx,
+            inner: s.substring(i + 1, closerIdx),
+            nextBold: bold,
+            nextItalic: true,
+            nextCode: code
+          };
+          break;
+        }
       }
     }
 
-    // Check for italic underscore: _text_
-    if (text.startsWith('_', index)) {
-      const end = text.indexOf('_', index + 1);
-      if (end !== -1) {
-        parts.push({
-          text: text.substring(index + 1, end),
-          bold: false,
-          italic: true,
-          code: false
-        });
-        index = end + 1;
-        continue;
+    // 6. Italic Underscore: _text_
+    if (char === '_' && !s.startsWith('__', i)) {
+      const openerValid = !isWhitespace(s[i + 1]) && !isAlphanumeric(s[i - 1]);
+      if (openerValid) {
+        let closerIdx = -1;
+        for (let k = i + 1; k < s.length; k++) {
+          if (s[k] === '_' && !s.startsWith('__', k)) {
+            const closerValid = !isWhitespace(s[k - 1]) && !isAlphanumeric(s[k + 1]);
+            if (closerValid) {
+              closerIdx = k;
+              break;
+            }
+          }
+        }
+        if (closerIdx !== -1) {
+          bestMatch = {
+            tag: '_',
+            start: i,
+            end: closerIdx,
+            inner: s.substring(i + 1, closerIdx),
+            nextBold: bold,
+            nextItalic: true,
+            nextCode: code
+          };
+          break;
+        }
       }
-    }
-
-    // Scanning normal text up to the next styling token
-    let nextIndex = index;
-    while (nextIndex < text.length) {
-      const char = text[nextIndex];
-      if (char === '`' || char === '*' || char === '_') {
-        break;
-      }
-      nextIndex++;
-    }
-
-    if (nextIndex > index) {
-      parts.push({
-        text: text.substring(index, nextIndex),
-        bold: false,
-        italic: false,
-        code: false
-      });
-      index = nextIndex;
-    } else {
-      // Prevent infinite loop for stray symbols
-      parts.push({
-        text: text[index],
-        bold: false,
-        italic: false,
-        code: false
-      });
-      index++;
     }
   }
 
-  return parts;
+  if (bestMatch) {
+    const beforeText = s.substring(0, bestMatch.start);
+    const afterText = s.substring(bestMatch.end + 1);
+
+    const tokens: InlineToken[] = [];
+    if (beforeText) {
+      tokens.push(...parseRecursive(beforeText, bold, italic, code));
+    }
+
+    tokens.push(...parseRecursive(bestMatch.inner, bestMatch.nextBold, bestMatch.nextItalic, bestMatch.nextCode));
+
+    if (afterText) {
+      tokens.push(...parseRecursive(afterText, bold, italic, code));
+    }
+
+    return tokens;
+  }
+
+  return [{ text: s, bold, italic, code }];
+}
+
+export function tokenizeInline(text: string): InlineToken[] {
+  return parseRecursive(text, false, false, false);
 }
 
 function createRunsFromText(text: string): TextRun[] {

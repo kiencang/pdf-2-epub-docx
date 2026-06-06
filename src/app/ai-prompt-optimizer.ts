@@ -34,9 +34,9 @@ BẠN PHẢI TUÂN THỦ NGHIÊM NGẶT CÁC RÀNG BUỘC SAU:
 - Sửa lỗi chính tả do OCR (nhận diện sai ký tự) dựa trên ngữ cảnh thực tế của câu.
 - Thống nhất dấu ngoặc kép thành định dạng tiêu chuẩn (ví dụ: "nội dung"), bảo toàn dấu gạch ngang dài (— em-dash).
 
-3. BẢO TOÀN CẤU TRÚC VÀ ĐỊNH DẠNG:
-- Tiêu đề: Phản ánh đúng cấu trúc phân cấp bằng H1, H2, H3 (#, ##, ###).
-- Nhấn mạnh: Giữ lại in nghiêng (*italic*) và in đậm (**bold**) đối với từ khóa.
+3. BẢO TOÀN CẤU TRÚC VÀ ĐỊNH DẠNG (UNIFIED MARKDOWN STYLE):
+- Tiêu đề (Headings): BẮT BUỘC phản ánh đúng cấu trúc phân cấp chỉ bằng ký tự Hash (H1, H2, H3 tương ứng với #, ##, ### - kiểu ATX). TUYỆT ĐỐI KHÔNG sử dụng kiểu gạch dưới bằng dấu gạch ngang hoặc dấu bằng ở dòng dưới (kiểu Setext như dòng dưới viết === hoặc ---).
+- Nhấn mạnh (Emphasis): BẮT BUỘC chỉ sử dụng ký tự dấu sao (\`*italic*\` cho in nghiêng, \`**bold**\` cho in đậm, \`***bold-italic***\` cho cả hai). TUYỆT ĐỐI KHÔNG sử dụng ký tự gạch dưới hoặc gạch chân dưới văn bản (\`_italic_\` hoặc \`__bold__\`).
 - Danh sách: Dùng \`-\` cho list không thứ tự, \`1.\` cho list có thứ tự.
 - Bảng biểu (Tables): Dùng định dạng bảng Markdown (\`|---|---|\`). Tuyệt đối không dùng ngắt dòng (\`Enter\`) bên trong các ô của bảng. Nếu bảng quá phức tạp, gom thành danh sách \`Key: Value\`.
 - Trích dẫn: Dùng \`>\`.

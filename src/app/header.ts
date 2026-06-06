@@ -52,7 +52,7 @@ import { MatIconModule } from '@angular/material/icon';
             
             <!-- Tailwind Tooltip -->
             <div class="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2.5 py-1.5 bg-slate-950 border border-white/10 text-slate-200 text-[10px] font-normal rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-200 shadow-xl whitespace-nowrap z-50 pointer-events-none">
-              <span class="font-bold text-amber-400">Flash:</span> Model này thích hợp để xử lý tài liệu có cấu trúc rất phức tạp.
+              <span class="font-bold text-amber-400">Flash:</span> Model này thích hợp để xử lý tài liệu có cấu trúc phức tạp.
             </div>
           </button>
 
@@ -70,8 +70,8 @@ import { MatIconModule } from '@angular/material/icon';
             <span>Lite</span>
 
             <!-- Tailwind Tooltip -->
-            <div class="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2.5 py-1.5 bg-slate-950 border border-white/10 text-slate-200 text-[10px] font-normal rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-200 shadow-xl whitespace-nowrap z-50 pointer-events-none">
-              <span class="font-bold text-indigo-400">Lite (mặc định):</span> Model có khả năng xử lý tốt trong đa số trường hợp.
+            <div class="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2.5 py-1.5 bg-slate-950 border border-white/10 text-slate-200 text-[10px] font-normal rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-205 shadow-xl whitespace-nowrap z-50 pointer-events-none">
+              <span class="font-bold text-indigo-400">Lite (mặc định):</span> Model có khả năng xử lý đủ tốt trong đa số trường hợp.
             </div>
           </button>
         </div>
