@@ -9,11 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
   template: `
     <header class="border-b border-white/5 bg-slate-950/80 backdrop-blur sticky top-0 z-40 px-6 py-4 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-emerald-400 p-0.5 flex items-center justify-center shadow-lg">
-          <div class="h-full w-full bg-slate-900 rounded-[10px] flex items-center justify-center">
-            <mat-icon class="text-indigo-400 text-lg">chrome_reader_mode</mat-icon>
-          </div>
-        </div>
+        <img src="favicon.svg" alt="Logo" class="h-10 w-10 object-contain hover:scale-105 transition-transform duration-200 select-none cursor-pointer" referrerpolicy="no-referrer" />
         <div>
           <h1 class="text-lg font-bold tracking-tight font-sans bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">PDF-2-EPUB-DOCX</h1>
         </div>
@@ -25,13 +21,20 @@ import { MatIconModule } from '@angular/material/icon';
              id="model-toggle-wrapper">
           <!-- Active indicator pill background with high-quality cubic-bezier transition -->
           <div 
-            class="absolute top-0.5 bottom-0.5 rounded-full border transition-all duration-300 pointer-events-none"
+            class="absolute top-0.5 bottom-0.5 rounded-full border transition-all duration-300 pointer-events-none overflow-hidden"
             [class.bg-amber-500/10]="selectedModel() === 'gemini-flash-latest'"
-            [class.border-amber-500/20]="selectedModel() === 'gemini-flash-latest'"
+            [class.border-amber-500/30]="selectedModel() === 'gemini-flash-latest'"
+            [class.shadow-[0_0_14px_rgba(245,158,11,0.25)]]="selectedModel() === 'gemini-flash-latest'"
             [class.bg-indigo-500/10]="selectedModel() === 'gemini-flash-lite-latest'"
-            [class.border-indigo-500/20]="selectedModel() === 'gemini-flash-lite-latest'"
+            [class.border-indigo-500/30]="selectedModel() === 'gemini-flash-lite-latest'"
+            [class.shadow-[0_0_14px_rgba(99,102,241,0.25)]]="selectedModel() === 'gemini-flash-lite-latest'"
             style="width: calc(50% - 3px);"
             [style.left]="selectedModel() === 'gemini-flash-latest' ? '2px' : '50%'">
+            <!-- Subtly soft glow diffusers inside the pill -->
+            <div class="absolute inset-0 opacity-20 blur-md rounded-full transition-colors duration-300"
+                 [class.bg-amber-400]="selectedModel() === 'gemini-flash-latest'"
+                 [class.bg-indigo-400]="selectedModel() === 'gemini-flash-lite-latest'">
+            </div>
           </div>
 
           <!-- Option 1: Flash -->

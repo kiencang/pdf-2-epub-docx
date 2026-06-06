@@ -38,11 +38,11 @@ import { MatIconModule } from '@angular/material/icon';
           </div>
         </div>
 
-        <div class="space-y-4 font-sans text-xs text-slate-300 leading-relaxed">
+        <div class="space-y-4 font-sans text-xs text-slate-300 leading-relaxed overflow-y-auto max-h-[50vh] md:max-h-[55vh] pr-2 scroll-smooth">
           <div class="flex gap-3">
             <div class="h-6 w-6 rounded-lg bg-indigo-600/25 border border-indigo-500/20 text-indigo-400 font-bold font-mono text-xs flex items-center justify-center shrink-0 mt-0.5">1</div>
             <div>
-              <p class="font-bold text-slate-200 mb-0.5">Tải lên tài liệu PDF</p>
+              <p class="text-sm font-bold text-slate-100 mb-1.5">Tải lên tài liệu PDF</p>
               <p>Kéo thả trực tiếp tệp tin PDF hoặc nhấp chọn tệp từ máy tính. Ứng dụng sẽ tách các ảnh từ tài liệu gốc để chuẩn bị cho việc tái cấu trúc lại thành EPUB. Việc tách ảnh được thực hiện thông qua thiết bị của người dùng, giai đoạn này chưa dùng đến AI.</p>
             </div>
           </div>
@@ -50,7 +50,7 @@ import { MatIconModule } from '@angular/material/icon';
           <div class="flex gap-3">
             <div class="h-6 w-6 rounded-lg bg-indigo-600/25 border border-indigo-500/20 text-indigo-400 font-bold font-mono text-xs flex items-center justify-center shrink-0 mt-0.5">2</div>
             <div>
-              <p class="font-bold text-slate-200 mb-0.5">Nhập API Key</p>
+              <p class="text-sm font-bold text-slate-100 mb-1.5">Nhập API Key</p>
               <p>Bản cấu trúc gốc từ tài liệu PDF & các ảnh được trích xuất từ bước trước cần AI để ráp nối lại với nhau tạo thành dữ liệu hoàn chỉnh. Điền khóa API Key của bạn ở phần <code class="bg-slate-950 px-1 py-0.5 text-indigo-400 font-mono rounded">Nhập API Key</code> để xử lý công việc trong giai đoạn này.</p>
             </div>
           </div>
@@ -58,8 +58,16 @@ import { MatIconModule } from '@angular/material/icon';
           <div class="flex gap-3">
             <div class="h-6 w-6 rounded-lg bg-indigo-600/25 border border-indigo-500/20 text-indigo-400 font-bold font-mono text-xs flex items-center justify-center shrink-0 mt-0.5">3</div>
             <div>
-              <p class="font-bold text-slate-200 mb-0.5">Đổi định dạng sang EPUB & DOCX</p>
+              <p class="text-sm font-bold text-slate-100 mb-1.5">Đổi định dạng sang EPUB & DOCX</p>
               <p>Hệ thống tự động gói dữ liệu thành tệp sách EPUB & định dạng DOCX, hỗ trợ tải về lưu trữ. EPUB xem tốt trên các máy đọc sách phổ thông như Kindle, iPad, v.v... DOCX là định dạng chuyên cho mục đích soạn thảo văn bản.<br/><br/>Và quan trọng nhất đầu vào là định dạng EPUB giúp dịch thuật rất tiện lợi & có bảo toàn ảnh.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-3">
+            <div class="h-6 w-6 rounded-lg bg-indigo-600/25 border border-indigo-500/20 text-indigo-400 font-bold font-mono text-xs flex items-center justify-center shrink-0 mt-0.5">4</div>
+            <div>
+              <p class="text-sm font-bold text-slate-100 mb-1.5">Tuyên bố từ chối trách nhiệm</p>
+              <p>Công cụ này chỉ nên sử dụng cho mục đích nghiên cứu và học tập cá nhân.<br/><br/>pdf-2-epub-docx cũng như người phát triển nó không đưa ra bất kỳ bảo đảm rõ ràng hay ngụ ý nào, cũng như không tuyên bố rằng công cụ sẽ vận hành hoàn hảo, chính xác hoặc cập nhật. Người phát triển sẽ không chịu trách nhiệm cho bất kỳ tổn thất hay thiệt hại nào phát sinh trực tiếp hoặc gián tiếp liên quan đến hoặc phát sinh từ việc sử dụng công cụ này.</p>
             </div>
           </div>
         </div>

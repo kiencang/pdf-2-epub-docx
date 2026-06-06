@@ -9,6 +9,9 @@ và dự án này tuân thủ [Semantic Versioning](https://semver.org/spec/v2.0
 ### Fixed
 - Thay đổi title index mặc định về tên công cụ;
 - Điều chỉnh thông tin chính thức địa chỉ công cụ;
+- Thêm faviocon;
+- Cập nhật nội dung cho hướng dẫn sử dụng;
+- Thêm cơ chế xử lý lỗi khi gửi batch request, tránh gửi tiếp request vô ích khi gặp các lỗi như hết ngưỡng miễn phí;
 
 ## [v1.0.17]- 2026-06-06
 ### Fixed

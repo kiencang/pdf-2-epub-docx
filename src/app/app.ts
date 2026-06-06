@@ -798,7 +798,15 @@ export class App {
 
         const batch = pendingIndices.slice(i, i + 2);
         // Process this batch of up to 2 items in parallel
-        await Promise.all(batch.map(idx => this.processSingleChunkForBatch(idx)));
+        const results = await Promise.all(batch.map(idx => this.processSingleChunkForBatch(idx)));
+        
+        // If any chunk encountered an unrecoverable/fatal error, halt queue immediately to conserve requests
+        if (results.includes(false)) {
+          this.shouldStopBatch.set(true);
+          const currentErr = this.apiError();
+          this.apiError.set(`${currentErr} (Tiến trình xử lý hàng loạt đã tự động dừng lại để tránh gửi tiếp các yêu cầu bị lỗi tương tự).`);
+          break;
+        }
       }
       
       const updatedChunks = this.pdfChunks();
@@ -830,11 +838,12 @@ export class App {
     }
   }
 
-  private async processSingleChunkForBatch(chunkIndex: number): Promise<void> {
+  private async processSingleChunkForBatch(chunkIndex: number): Promise<boolean> {
     try {
       // Pre-select current processing item for visibility
       this.selectedChunkIndex.set(chunkIndex);
       await this.executeChunkOptimization(chunkIndex);
+      return true;
     } catch (err: any) {
       this.logError(err);
       const translated = this.translateGeminiError(err.message || err);
@@ -848,6 +857,15 @@ export class App {
         };
         return newCs;
       });
+
+      // Check if this error is an unrecoverable/fatal blockage that renders future batch turns obsolete
+      const rawMsg = typeof err === 'string' ? err : (err.message || JSON.stringify(err));
+      const lower = rawMsg.toLowerCase();
+      const isFatal = lower.includes('quota') || lower.includes('429') || lower.includes('resource_exhausted') ||
+                      lower.includes('api key') || lower.includes('api_key') || lower.includes('403') || lower.includes('permission_denied') || lower.includes('unauthorized') ||
+                      lower.includes('failed to construct \'headers\'') || lower.includes('bytestring') ||
+                      lower.includes('overloaded') || lower.includes('503') || lower.includes('service_unavailable');
+      return !isFatal;
     } finally {
       await this.saveCurrentProgressToHistory();
     }
