@@ -70,6 +70,7 @@ export class App {
   isBatchProcessing = signal(false);
   shouldStopBatch = signal(false);
   selectedModel = signal<ModelType>('gemini-flash-latest');
+  selectedFormat = signal<'epub' | 'docx'>('epub');
   parsingStatus = signal('');
   apiError = signal('');
   successMessage = signal('');
@@ -199,6 +200,11 @@ export class App {
     this.updateApiKey(trimmed);
     this.showApiKeyModal.set(false);
     this.showSuccess('Đã cấu hình API Key thành công.');
+  }
+
+  onFormatTypeChanged(format: 'epub' | 'docx') {
+    this.selectedFormat.set(format);
+    this.showSuccess(`Đã chuyển mục tiêu ngắt dòng và chuyển đổi sang định dạng ${format.toUpperCase()}`);
   }
 
   clearApiKeyModal() {
@@ -674,7 +680,7 @@ export class App {
 
     const modelName = this.selectedModel();
     // Optimize layout and map structures using the AiPromptOptimizer module
-    const rawMarkdown = await this.aiOptimizer.optimizeChunk(apiKey, modelName, file, chunk);
+    const rawMarkdown = await this.aiOptimizer.optimizeChunk(apiKey, modelName, file, chunk, this.selectedFormat());
 
     // Parse output Markdown to HTML preview
     const renderedHtml = this.pdfProcessor.renderMarkdownToHtml(rawMarkdown, chunk.pages);

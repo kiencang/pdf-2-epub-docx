@@ -13,7 +13,9 @@ import {
   ImageRun,
   BorderStyle,
   WidthType,
-  VerticalAlign
+  VerticalAlign,
+  Math as DocxMath,
+  MathRun
 } from 'docx';
 
 function convertDataUrlToUint8Array(dataUrl: string): Uint8Array {
@@ -33,6 +35,7 @@ interface InlineToken {
   bold: boolean;
   italic: boolean;
   code: boolean;
+  math: boolean;
 }
 
 function isAlphanumeric(char: string | undefined): boolean {
@@ -44,12 +47,17 @@ function parseRecursive(
   s: string,
   bold: boolean,
   italic: boolean,
-  code: boolean
+  code: boolean,
+  math: boolean = false
 ): InlineToken[] {
   if (!s) return [];
 
+  if (math) {
+    return [{ text: s, bold, italic, code, math: true }];
+  }
+
   if (code) {
-    return [{ text: s, bold, italic, code }];
+    return [{ text: s, bold, italic, code, math: false }];
   }
 
   let bestMatch: {
@@ -60,12 +68,54 @@ function parseRecursive(
     nextBold: boolean;
     nextItalic: boolean;
     nextCode: boolean;
+    nextMath: boolean;
   } | null = null;
 
   for (let i = 0; i < s.length; i++) {
     const char = s[i];
 
     const isWhitespace = (ch: string | undefined) => !ch || ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r';
+
+    // 0. Display Math: $$formula$$
+    if (s.startsWith('$$', i)) {
+      const closerIdx = s.indexOf('$$', i + 2);
+      if (closerIdx !== -1) {
+        bestMatch = {
+          tag: '$$',
+          start: i,
+          end: closerIdx + 1,
+          inner: s.substring(i + 2, closerIdx),
+          nextBold: bold,
+          nextItalic: italic,
+          nextCode: code,
+          nextMath: true
+        };
+        break;
+      }
+    }
+
+    // 0.5. Inline Math: $formula$
+    if (char === '$' && !s.startsWith('$$', i)) {
+      // Ignore escaped \$
+      if (i > 0 && s[i - 1] === '\\') {
+        // Skip
+      } else {
+        const closerIdx = s.indexOf('$', i + 1);
+        if (closerIdx !== -1) {
+          bestMatch = {
+            tag: '$',
+            start: i,
+            end: closerIdx,
+            inner: s.substring(i + 1, closerIdx),
+            nextBold: bold,
+            nextItalic: italic,
+            nextCode: code,
+            nextMath: true
+          };
+          break;
+        }
+      }
+    }
 
     // 1. Inline code: `text`
     if (char === '`') {
@@ -82,7 +132,8 @@ function parseRecursive(
               inner: s.substring(i + 1, closerIdx),
               nextBold: bold,
               nextItalic: italic,
-              nextCode: true
+              nextCode: true,
+              nextMath: false
             };
             break;
           }
@@ -111,7 +162,8 @@ function parseRecursive(
               inner: s.substring(i + 3, closerIdx),
               nextBold: true,
               nextItalic: true,
-              nextCode: code
+              nextCode: code,
+              nextMath: false
             };
             break;
           }
@@ -140,7 +192,8 @@ function parseRecursive(
               inner: s.substring(i + 2, closerIdx),
               nextBold: true,
               nextItalic: italic,
-              nextCode: code
+              nextCode: code,
+              nextMath: false
             };
             break;
           }
@@ -170,7 +223,8 @@ function parseRecursive(
             inner: s.substring(i + 2, closerIdx),
             nextBold: true,
             nextItalic: italic,
-            nextCode: code
+            nextCode: code,
+            nextMath: false
           };
           break;
         }
@@ -199,7 +253,8 @@ function parseRecursive(
             inner: s.substring(i + 1, closerIdx),
             nextBold: bold,
             nextItalic: true,
-            nextCode: code
+            nextCode: code,
+            nextMath: false
           };
           break;
         }
@@ -228,7 +283,8 @@ function parseRecursive(
             inner: s.substring(i + 1, closerIdx),
             nextBold: bold,
             nextItalic: true,
-            nextCode: code
+            nextCode: code,
+            nextMath: false
           };
           break;
         }
@@ -242,35 +298,45 @@ function parseRecursive(
 
     const tokens: InlineToken[] = [];
     if (beforeText) {
-      tokens.push(...parseRecursive(beforeText, bold, italic, code));
+      tokens.push(...parseRecursive(beforeText, bold, italic, code, false));
     }
 
-    tokens.push(...parseRecursive(bestMatch.inner, bestMatch.nextBold, bestMatch.nextItalic, bestMatch.nextCode));
+    tokens.push(...parseRecursive(bestMatch.inner, bestMatch.nextBold, bestMatch.nextItalic, bestMatch.nextCode, bestMatch.nextMath));
 
     if (afterText) {
-      tokens.push(...parseRecursive(afterText, bold, italic, code));
+      tokens.push(...parseRecursive(afterText, bold, italic, code, false));
     }
 
     return tokens;
   }
 
-  return [{ text: s, bold, italic, code }];
+  return [{ text: s, bold, italic, code, math: false }];
 }
 
 export function tokenizeInline(text: string): InlineToken[] {
-  return parseRecursive(text, false, false, false);
+  return parseRecursive(text, false, false, false, false);
 }
 
-function createRunsFromText(text: string): TextRun[] {
+function createElementsFromText(text: string, italics?: boolean, color?: string): any[] {
   const tokens = tokenizeInline(text);
   return tokens.map(token => {
+    if (token.math) {
+      return new DocxMath({
+        children: [new MathRun(token.text)]
+      });
+    }
+
+    let textVal = token.text;
+    // Strip escaping backslashes like \$ -> $, \* -> *, etc defined in rules
+    textVal = textVal.replace(/\\([$*#_>`])/g, '$1');
+
     return new TextRun({
-      text: token.text,
+      text: textVal,
       bold: token.bold || undefined,
-      italics: token.italic || undefined,
+      italics: italics || token.italic || undefined,
       font: token.code ? "Consolas" : "Calibri",
       size: token.code ? 19 : 22, // Calibri 11pt stands for docx size 22
-      color: token.code ? "A855F7" : undefined, // slate code color
+      color: color || (token.code ? "A855F7" : undefined), // slate code color
     });
   });
 }
@@ -294,7 +360,7 @@ function parseMarkdownTable(tableLines: string[]): Table {
       return new TableCell({
         children: [
           new Paragraph({
-            children: createRunsFromText(colText),
+            children: createElementsFromText(colText),
             spacing: { before: 80, after: 80 },
           }),
         ],
@@ -492,16 +558,7 @@ export class DocxExporter {
         const quoteText = trimmedLine.replace(/^>\s*/, '');
         children.push(
           new Paragraph({
-            children: tokenizeInline(quoteText).map(token => {
-              return new TextRun({
-                text: token.text,
-                bold: token.bold || undefined,
-                italics: true,
-                font: token.code ? "Consolas" : "Calibri",
-                size: token.code ? 19 : 21,
-                color: "4B5563",
-              });
-            }),
+            children: createElementsFromText(quoteText, true, "4B5563"),
             indent: { left: 720 },
             spacing: { before: 120, after: 120 },
           })
@@ -515,16 +572,7 @@ export class DocxExporter {
         const bulletText = trimmedLine.substring(2);
         children.push(
           new Paragraph({
-            children: tokenizeInline(bulletText).map(token => {
-              return new TextRun({
-                text: token.text,
-                bold: token.bold || undefined,
-                italics: token.italic || undefined,
-                font: token.code ? "Consolas" : "Calibri",
-                size: token.code ? 19 : 22,
-                color: token.code ? "A855F7" : undefined,
-              });
-            }),
+            children: createElementsFromText(bulletText),
             bullet: { level: 0 },
             spacing: { after: 100 },
           })
@@ -547,16 +595,7 @@ export class DocxExporter {
                 font: "Calibri",
                 size: 22,
               }),
-              ...tokenizeInline(ordText).map(token => {
-                return new TextRun({
-                  text: token.text,
-                  bold: token.bold || undefined,
-                  italics: token.italic || undefined,
-                  font: token.code ? "Consolas" : "Calibri",
-                  size: token.code ? 19 : 22,
-                  color: token.code ? "A855F7" : undefined,
-                });
-              }),
+              ...createElementsFromText(ordText),
             ],
             indent: { left: 720 },
             spacing: { after: 100 },
@@ -583,16 +622,7 @@ export class DocxExporter {
             if (preText) {
               children.push(
                 new Paragraph({
-                  children: tokenizeInline(preText).map(token => {
-                    return new TextRun({
-                      text: token.text,
-                      bold: token.bold || undefined,
-                      italics: token.italic || undefined,
-                      font: token.code ? "Consolas" : "Calibri",
-                      size: token.code ? 19 : 22,
-                      color: token.code ? "A855F7" : undefined,
-                    });
-                  }),
+                  children: createElementsFromText(preText),
                   spacing: { after: 120 },
                 })
               );
@@ -669,16 +699,7 @@ export class DocxExporter {
           if (postText) {
             children.push(
               new Paragraph({
-                children: tokenizeInline(postText).map(token => {
-                  return new TextRun({
-                    text: token.text,
-                    bold: token.bold || undefined,
-                    italics: token.italic || undefined,
-                    font: token.code ? "Consolas" : "Calibri",
-                    size: token.code ? 19 : 22,
-                    color: token.code ? "A855F7" : undefined,
-                  });
-                }),
+                children: createElementsFromText(postText),
                 spacing: { after: 120 },
               })
             );
@@ -692,16 +713,7 @@ export class DocxExporter {
       // Default plain text line
       children.push(
         new Paragraph({
-          children: tokenizeInline(trimmedLine).map(token => {
-            return new TextRun({
-              text: token.text,
-              bold: token.bold || undefined,
-              italics: token.italic || undefined,
-              font: token.code ? "Consolas" : "Calibri",
-              size: token.code ? 19 : 22,
-              color: token.code ? "A855F7" : undefined,
-            });
-          }),
+          children: createElementsFromText(trimmedLine),
           alignment: AlignmentType.JUSTIFIED,
           spacing: { after: 120 },
         })

@@ -9,15 +9,16 @@ export type ModelType = 'gemini-flash-latest' | 'gemini-flash-lite-latest' | 'ge
   selector: 'app-header',
   imports: [CommonModule, MatIconModule],
   template: `
-    <header class="border-b border-white/5 bg-slate-950/80 backdrop-blur sticky top-0 z-40 px-6 py-4 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <img src="favicon.svg" alt="Logo" class="h-10 w-10 object-contain hover:scale-105 transition-transform duration-200 select-none cursor-pointer" referrerpolicy="no-referrer" />
-        <div>
-          <h1 class="text-lg font-bold tracking-tight font-sans bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">PDF-2-EPUB-DOCX</h1>
+    <header class="border-b border-white/5 bg-slate-950/80 backdrop-blur sticky top-0 z-40 px-6 py-4 flex items-center justify-between gap-4">
+      <!-- Left side: Logo, Name, Model Toggle -->
+      <div class="flex items-center gap-3 flex-1 justify-start min-w-0">
+        <img src="favicon.svg" alt="Logo" class="h-10 w-10 object-contain hover:scale-105 transition-transform duration-200 select-none cursor-pointer shrink-0" referrerpolicy="no-referrer" />
+        <div class="hidden xl:block shrink-0">
+          <h1 class="text-sm font-bold tracking-tight font-sans bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">PDF-2-EPUB-DOCX</h1>
         </div>
  
         <!-- Cool 3-Model Switch Toggle -->
-        <div class="flex items-center bg-slate-900/90 border border-white/5 rounded-full p-0.5 ml-2.5 shadow-inner relative select-none shrink-0 transition-opacity duration-200 w-[220px]"
+        <div class="flex items-center bg-slate-900/90 border border-white/5 rounded-full p-0.5 ml-2 shadow-inner relative select-none shrink-0 transition-opacity duration-200 w-[220px]"
              [class.opacity-50]="isOptimizing() || isParsing()"
              [class.pointer-events-none]="isOptimizing() || isParsing()"
              id="model-toggle-wrapper">
@@ -80,7 +81,7 @@ export type ModelType = 'gemini-flash-latest' | 'gemini-flash-lite-latest' | 'ge
               <span class="font-bold text-indigo-400">Lite:</span> Model có khả năng xử lý đủ tốt với các tài liệu có cách trình bày đơn giản.
             </div>
           </button>
-
+ 
           <!-- Option 3: Gemma -->
           <button 
             id="toggle-btn-gemma"
@@ -96,14 +97,58 @@ export type ModelType = 'gemini-flash-latest' | 'gemini-flash-lite-latest' | 'ge
  
             <!-- Tailwind Tooltip -->
             <div class="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2.5 py-1.5 bg-slate-950 border border-white/10 text-slate-200 text-[10px] font-normal rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-205 shadow-xl w-[300px] whitespace-normal z-50 pointer-events-none text-center leading-normal">
-              <span class="font-bold text-emerald-400">Gemma:</span> Model 'gemma-4-26b-a4b-it' mã nguồn mở.<br>Chỉ dùng để test, không có tốc độ tốt như Lite & Flash.
+              <span class="font-bold text-emerald-400">Gemma:</span> Model "gemma-4-26b-a4b-it" mã nguồn mở.<br>Chỉ dùng để test, không có tốc độ tốt như Lite & Flash.
             </div>
           </button>
         </div>
       </div>
 
-      <!-- Status Badge -->
-      <div class="flex items-center gap-2 text-xs">
+      <!-- Center: Big Target Format Selector Toggle -->
+      <div class="flex justify-center flex-1">
+        <div class="flex items-center bg-slate-900/90 border border-white/10 rounded-xl p-1 shadow-2xl relative select-none shrink-0 transition-opacity duration-200 w-[240px]"
+             [class.opacity-50]="isOptimizing() || isParsing()"
+             [class.pointer-events-none]="isOptimizing() || isParsing()"
+             id="format-toggle-wrapper">
+          <!-- Active indicator pill background for Format -->
+          <div 
+            class="absolute top-1 bottom-1 rounded-lg border transition-all duration-300 pointer-events-none overflow-hidden bg-indigo-500/15 border-indigo-500/40 shadow-[0_0_16px_rgba(99,102,241,0.25)]"
+            style="width: 114px;"
+            [style.left.px]="selectedFormat() === 'epub' ? 4 : 122">
+            <div class="absolute inset-0 bg-indigo-400 opacity-20 blur-sm rounded-lg"></div>
+          </div>
+
+          <!-- Option: EPUB -->
+          <button 
+            id="toggle-btn-epub"
+            type="button"
+            (click)="onFormatSelect('epub')"
+            [disabled]="isOptimizing() || isParsing()"
+            class="relative w-[114px] h-9 rounded-lg flex items-center justify-center gap-1.5 text-xs font-bold font-sans transition-all duration-200 outline-none cursor-pointer group disabled:cursor-not-allowed z-10"
+            [class.text-indigo-400]="selectedFormat() === 'epub'"
+            [class.text-slate-400]="selectedFormat() !== 'epub'"
+            [class.hover:text-slate-200]="selectedFormat() !== 'epub'">
+            <mat-icon class="!text-[16px] !w-4 !h-4 leading-none flex items-center justify-center group-hover:scale-110 transition-transform" [class.text-indigo-400]="selectedFormat() === 'epub'">book</mat-icon>
+            <span>EPUB</span>
+          </button>
+
+          <!-- Option: DOCX -->
+          <button 
+            id="toggle-btn-docx"
+            type="button"
+            (click)="onFormatSelect('docx')"
+            [disabled]="isOptimizing() || isParsing()"
+            class="relative w-[114px] h-9 rounded-lg flex items-center justify-center gap-1.5 text-xs font-bold font-sans transition-all duration-200 outline-none cursor-pointer group disabled:cursor-not-allowed z-10"
+            [class.text-indigo-400]="selectedFormat() === 'docx'"
+            [class.text-slate-400]="selectedFormat() !== 'docx'"
+            [class.hover:text-slate-200]="selectedFormat() !== 'docx'">
+            <mat-icon class="!text-[16px] !w-4 !h-4 leading-none flex items-center justify-center group-hover:scale-110 transition-transform" [class.text-indigo-400]="selectedFormat() === 'docx'">description</mat-icon>
+            <span>DOCX</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Right side: Actions & Status Badge -->
+      <div class="flex items-center gap-2 text-xs flex-1 justify-end shrink-0">
         @if (isScriptLoaded()) {
           <!-- Lịch sử chuyển đổi Button -->
           <button 
@@ -112,7 +157,7 @@ export type ModelType = 'gemini-flash-latest' | 'gemini-flash-lite-latest' | 'ge
             [disabled]="isOptimizing() || isParsing()"
             class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-white/5 rounded-full font-medium transition-colors cursor-pointer focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none">
             <mat-icon class="!text-[15px] !w-[15px] !h-[15px] leading-none flex items-center justify-center -mt-[1px]">history</mat-icon>
-            <span>Lịch sử chuyển đổi</span>
+            <span>Lịch sử</span>
             @if (historyCount() > 0) {
               <span class="bg-indigo-500 text-white text-[9px] min-w-[16px] h-4 flex items-center justify-center rounded-full font-semibold px-1 select-none leading-none">
                 {{ historyCount() }}
@@ -126,12 +171,12 @@ export type ModelType = 'gemini-flash-latest' | 'gemini-flash-lite-latest' | 'ge
             [disabled]="isOptimizing() || isParsing()"
             class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-full font-medium transition-colors cursor-pointer focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed">
             <span class="h-1.5 w-1.5 bg-emerald-400 rounded-full" [class.animate-pulse]="!clientApiKey()"></span>
-            {{ clientApiKey() ? 'Đang dùng Key của bạn' : 'Nhập API Key' }}
+            {{ clientApiKey() ? 'API Key cá nhân' : 'Nhập API Key' }}
           </button>
         } @else {
-          <span class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full font-medium">
+          <span class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full font-medium whitespace-nowrap">
             <span class="h-1.5 w-1.5 bg-amber-400 rounded-full animate-bounce"></span>
-            Đang khởi tạo thư viện...
+            Đang khởi tạo...
           </span>
         }
       </div>
@@ -142,17 +187,24 @@ export type ModelType = 'gemini-flash-latest' | 'gemini-flash-lite-latest' | 'ge
 export class Header {
   isScriptLoaded = input.required<boolean>();
   selectedModel = input.required<ModelType>();
+  selectedFormat = input.required<'epub' | 'docx'>();
   clientApiKey = input.required<string>();
   historyCount = input.required<number>();
   isOptimizing = input.required<boolean>();
   isParsing = input.required<boolean>();
 
   modelChange = output<ModelType>();
+  formatChange = output<'epub' | 'docx'>();
   openHistory = output<void>();
   openApiKey = output<void>();
 
   onModelSelect(model: ModelType) {
     if (this.isOptimizing() || this.isParsing()) return;
     this.modelChange.emit(model);
+  }
+
+  onFormatSelect(format: 'epub' | 'docx') {
+    if (this.isOptimizing() || this.isParsing()) return;
+    this.formatChange.emit(format);
   }
 }

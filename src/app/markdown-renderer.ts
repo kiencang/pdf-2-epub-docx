@@ -39,12 +39,44 @@ export class MarkdownRenderer {
       }
     });
 
+    // Protect LaTeX math formulas from being modified by marked parser
+    const mathBlocks: string[] = [];
+    let mathPlaceholderIndex = 0;
+
+    // Use regex to locate display math ($$ ... $$) and inline math ($ ... $)
+    const displayMathRegex = /\$\$([\s\S]+?)\$\$/g;
+    const inlineMathRegex = /(?<!\\)\$((?!\s)[^$\n]+?(?<!\\))\$/g;
+
+    let preprocessed = processedMarkdown;
+
+    // Replace display math first
+    preprocessed = preprocessed.replace(displayMathRegex, (match) => {
+      const placeholder = `<!--MATH_BLOCK_PLACEHOLDER_${mathPlaceholderIndex}-->`;
+      mathBlocks.push(match);
+      mathPlaceholderIndex++;
+      return placeholder;
+    });
+
+    // Replace inline math
+    preprocessed = preprocessed.replace(inlineMathRegex, (match) => {
+      const placeholder = `<!--MATH_BLOCK_PLACEHOLDER_${mathPlaceholderIndex}-->`;
+      mathBlocks.push(match);
+      mathPlaceholderIndex++;
+      return placeholder;
+    });
+
     let html = '';
     try {
-      html = marked.parse(processedMarkdown, { breaks: true, async: false }) as string;
+      html = marked.parse(preprocessed, { breaks: true, async: false }) as string;
     } catch(e) {
       console.warn("marked error", e);
       html = `<pre>${processedMarkdown}</pre>`;
+    }
+
+    // Restore protected math blocks
+    for (let i = 0; i < mathPlaceholderIndex; i++) {
+      const placeholder = `<!--MATH_BLOCK_PLACEHOLDER_${i}-->`;
+      html = html.replace(placeholder, mathBlocks[i]);
     }
 
     let rendered = html;
