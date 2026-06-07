@@ -222,7 +222,7 @@ export class App {
 
     // 2. Permission Denied (403)
     if (lower.includes('api key') || lower.includes('api_key') || lower.includes('403') || lower.includes('permission_denied') || lower.includes('unauthorized')) {
-      return '🔴 Lỗi: Thao tác bị từ chối do API Key không hợp lệ hoặc thiếu quyền hạn (Permission Denied). Đợi một lúc rồi thử lại có thể giải quyết được vấn đề này.';
+      return '🔴 Lỗi: Thao tác bị từ chối do API Key không hợp lệ hoặc thiếu quyền hạn (Permission Denied). Hãy kiểm tra lại API Key của bạn.';
     }
 
     // 3. API Key Format (Accents, spaces, headers error)
@@ -504,7 +504,7 @@ export class App {
         fileReader.readAsArrayBuffer(file);
       });
 
-      this.parsingStatus.set('Đang nạp file vào không gian ảo...');
+      this.parsingStatus.set('Chuẩn bị phân tích tài liệu...');
       const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
       const pdf = await loadingTask.promise;
 
