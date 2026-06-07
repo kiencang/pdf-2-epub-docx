@@ -69,7 +69,7 @@ export class App {
   isOptimizing = signal(false);
   isBatchProcessing = signal(false);
   shouldStopBatch = signal(false);
-  selectedModel = signal<ModelType>('gemini-flash-lite-latest');
+  selectedModel = signal<ModelType>('gemini-flash-latest');
   parsingStatus = signal('');
   apiError = signal('');
   successMessage = signal('');

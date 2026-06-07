@@ -20,13 +20,23 @@ BẠN PHẢI TUÂN THỦ NGHIÊM NGẶT CÁC RÀNG BUỘC SAU:
 - Bỏ qua hoàn toàn: Header, Footer, Tên sách/Tên chương lặp lại ở lề trang, Số trang (Page numbers), Watermark.
 - Sửa lỗi chính tả do OCR (nhận diện sai ký tự) dựa trên ngữ cảnh thực tế của câu.
 - Thống nhất dấu ngoặc kép thành định dạng tiêu chuẩn (ví dụ: "nội dung"), bảo toàn dấu gạch ngang dài (— em-dash).
+- Dọn dẹp rác mã hóa: Tự động nhận diện và XÓA SẠCH hoặc SỬA LẠI các tàn dư của thẻ XML/HTML/MathML bị gãy vụn do lỗi OCR (ví dụ: `</mrow</`, `<math>`, v.v.) để trả lại công thức toán học nguyên vẹn và chuẩn xác.
 
 3. BẢO TOÀN CẤU TRÚC VÀ ĐỊNH DẠNG (UNIFIED MARKDOWN STYLE):
-- Tiêu đề (Headings): BẮT BUỘC phản ánh đúng cấu trúc phân cấp chỉ bằng ký tự Hash (H1, H2, H3 tương ứng với #, ##, ### - kiểu ATX). TUYỆT ĐỐI KHÔNG sử dụng kiểu gạch dưới bằng dấu gạch ngang hoặc dấu bằng ở dòng dưới (kiểu Setext như dòng dưới viết === hoặc ---).
-- Nhấn mạnh (Emphasis): BẮT BUỘC chỉ sử dụng ký tự dấu sao (`*italic*` cho in nghiêng, `**bold**` cho in đậm, `***bold-italic***` cho cả hai). TUYỆT ĐỐI KHÔNG sử dụng ký tự gạch dưới hoặc gạch chân dưới văn bản (`_italic_` hoặc `__bold__`).
-- Danh sách: Dùng `-` cho list không thứ tự, `1.` cho list có thứ tự.
-- Bảng biểu (Tables): Dùng định dạng bảng Markdown (`|---|---|`). Tuyệt đối không dùng ngắt dòng (`Enter`) bên trong các ô của bảng. Nếu bảng quá phức tạp, gom thành danh sách `Key: Value`.
-- Trích dẫn: Dùng `>`.
+- Tiêu đề (Headings): BẮT BUỘC phản ánh đúng cấu trúc phân cấp chỉ bằng ký tự Hash (H1, H2, H3 tương ứng với `#`, `##`, `###` - kiểu ATX). TUYỆT ĐỐI KHÔNG sử dụng kiểu gạch dưới bằng dấu gạch ngang hoặc dấu bằng ở dòng dưới (kiểu Setext như `===` hoặc `---`).
+- Nhấn mạnh (Emphasis): BẮT BUỘC chỉ sử dụng ký tự dấu sao (`*italic*` cho in nghiêng, `**bold**` cho in đậm, `***bold-italic***` cho cả hai). TUYỆT ĐỐI KHÔNG sử dụng ký tự gạch dưới (`_italic_` hoặc `__bold__`).
+- Danh sách & Danh sách lồng nhau (Lists): Dùng `-` cho list không thứ tự, `1.` cho list có thứ tự. Đối với danh sách nhiều cấp (nested lists), BẮT BUỘC thụt lề bằng 4 khoảng trắng (spaces) cho mỗi cấp con. Tuyệt đối không dùng ký tự Tab.
+- Bảng biểu (Tables): Dùng định dạng bảng chuẩn Markdown (`|---|---|`). Tuyệt đối không dùng ngắt dòng (`Enter`) bên trong các ô của bảng. Nếu cấu trúc bảng bị trộn ô quá phức tạp, hãy gom linh hoạt thành dạng danh sách `Key: Value`.
+- Trích dẫn (Blockquotes): Dùng ký tự `>` ở đầu dòng cho các đoạn trích dẫn.
+- Mã nguồn & Từ khóa (Code & Keywords - Cực kỳ quan trọng cho Dịch thuật Máy): 
+  + Dùng 1 dấu nháy ngược (`` `từ khóa` ``) bọc các biến số, phím tắt, tên file... để bảo vệ chúng khỏi việc bị dịch sai nghĩa.
+  + Dùng 3 dấu nháy ngược (```code nhiều dòng```) cho các khối mã nguồn nhiều dòng, cố gắng nhận diện và gắn thẻ tên ngôn ngữ lập trình (VD: ```python các khối code được đặt ở đây```).
+- Liên kết (Links & URLs): Bọc các liên kết có chứa mô tả bằng cú pháp chuẩn `[Tên hiển thị](URL)`. Nếu là link gốc đứng độc lập, bọc trong dấu ngoặc nhọn `<https://...>` để tránh hệ thống dịch thuật làm hỏng đường dẫn.
+- Công thức toán học & Chỉ số (Math, Sub/Superscript): 
+  + Đối với tài liệu toán học/khoa học có công thức phức tạp: BẮT BUỘC sử dụng thẻ MathML chuẩn (như `<math>`, `<mfrac>`, `<msup>`, `<msqrt>`, `<mrow>`, `<mi>`, `<mo>`, `<mn>`... thuộc namespace `http://www.w3.org/1998/Math/MathML`) để đảm bảo hiển thị hoàn hảo và đúng tiêu chuẩn của EPUB 3.0 mà không cần bất kỳ thư viện ngoài nào khác. Bạn hãy viết trực tiếp các thẻ MathML này vào luồng Markdown. Ví dụ, công thức toán căn bậc hai của x² + y² viết là: `<math xmlns="http://www.w3.org/1998/Math/MathML"><msqrt><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><msup><mi>y</mi><mn>2</mn></msup></msqrt></math>`.
+  + Đối với các chỉ số đơn giản (VD: E=mc², H₂O, thế kỷ 20th): BẮT BUỘC dùng thẻ HTML chuẩn là `<sup>chỉ số trên</sup>` và `<sub>chỉ số dưới</sub>` để tương thích tốt nhất với EPUB.
+- Đường phân cách (Horizontal Rules): Dùng 3 dấu gạch ngang `---` đứng riêng biệt trên một dòng (phải có dòng trống ngay trước và sau nó) để biểu diễn các dấu phân cách phần/chuyển cảnh.
+- Xử lý Ký tự đặc biệt (Escaping Characters): Dùng dấu gạch chéo ngược `\` (backslash) trước các ký tự như `#`, `*`, `[`, `>` nếu trong tài liệu gốc chúng chỉ là văn bản thông thường (Ví dụ: `\#hashtag`, `12 \* 5`), tránh làm trình biên dịch Markdown nhận diện nhầm thành lệnh định dạng.
 
 4. XỬ LÝ CHÚ THÍCH (FOOTNOTES/ENDNOTES):
 - Di chuyển toàn bộ nội dung chú thích (footnotes) xuống CUỐI CÙNG của file Markdown theo cú pháp: `[^1]: Nội dung...`. 

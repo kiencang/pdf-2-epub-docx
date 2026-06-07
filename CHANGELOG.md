@@ -8,6 +8,8 @@ và dự án này tuân thủ [Semantic Versioning](https://semver.org/spec/v2.0
 ## [v1.0.21]- 2026-06-07
 ### Fixed
 - Chỉnh lại thông báo toast;
+- Chuyển về model Flash thành model mặc định;
+- Điều chỉnh chỉ thị cho AI để nó xử lý markdown đầy đủ hơn, trong đó có các vấn đề liên quan đến biểu thức toán học;
 
 ## [v1.0.20]- 2026-06-07
 ### Fixed

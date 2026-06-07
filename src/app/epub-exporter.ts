@@ -43,6 +43,7 @@ export class EpubExporter {
     });
 
     const xhtmlContent = MarkdownRenderer.markdownToXhtml(markdownContent);
+    const mathmlProperty = xhtmlContent.includes('<math') ? ' properties="mathml"' : '';
 
     zip.file('OEBPS/section1.xhtml', `<?xml version="1.0" encoding="utf-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -138,7 +139,7 @@ code {
     <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
     <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
     <item id="style" href="stylesheet.css" media-type="text/css"/>
-    <item id="section1" href="section1.xhtml" media-type="application/xhtml+xml"/>
+    <item id="section1" href="section1.xhtml" media-type="application/xhtml+xml"${mathmlProperty}/>
 ${imageManifestItems}  </manifest>
   <spine toc="ncx">
     <itemref idref="nav"/>
