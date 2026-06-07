@@ -15,7 +15,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { PdfProcessor, PdfPageData } from './pdf-processor';
 import { AiPromptOptimizer } from './ai-prompt-optimizer';
 
-import { Header } from './header';
+import { Header, ModelType } from './header';
 import { Footer } from './footer';
 import { EmptyState } from './empty-state';
 import { InstructionModal } from './instruction-modal';
@@ -69,7 +69,7 @@ export class App {
   isOptimizing = signal(false);
   isBatchProcessing = signal(false);
   shouldStopBatch = signal(false);
-  selectedModel = signal<'gemini-flash-latest' | 'gemini-flash-lite-latest'>('gemini-flash-lite-latest');
+  selectedModel = signal<ModelType>('gemini-flash-lite-latest');
   parsingStatus = signal('');
   apiError = signal('');
   successMessage = signal('');
