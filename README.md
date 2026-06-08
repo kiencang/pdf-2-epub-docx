@@ -23,5 +23,5 @@ Dưới đây là danh sách các thư viện quan trọng mà ứng dụng này
 
 ### 3. Đọc/Ghi & Tạo định dạng đầu ra (EPUB, DOCX, ZIP)
 *   **[Docx.js](https://docx.js.org/)** – Phát triển bởi **Dolan Miu**. Thư viện tạo tệp tin Microsoft Word (.docx) chạy trực tiếp trên trình duyệt (Client-side).
-*   **[JSZip](https://stuk.github.io/jszip/)** – Phát triển bởi **Stuart Knightley**. Thư viện giúp đóng gói dữ liệu nén cho EPUB (Mimetype, OEBPS) và tạo tệp nén ZIP tải xuống hàng loạt.
-*   **[Marked.js](https://marked.js.org/)** – Trình biên dịch Markdown, giúp biên dịch dữ liệu văn bản từ AI phản hồi thành mã HTML sạch để hiển thị xem trước và được dùng làm nguồn khi chuyển sang định dạng EPUB.
+*   **[JSZip](https://stuk.github.io/jszip/)** – Phát triển bởi **Stuart Knightley**. Thư viện giúp đóng gói dữ liệu nén cho EPUB (Mimetype, OEBPS) và tạo tệp nén ZIP để tải về.
+*   **[Marked.js](https://marked.js.org/)** – Trình biên dịch Markdown, giúp biên dịch dữ liệu văn bản từ AI phản hồi thành mã HTML sạch, để hiển thị xem trước và được dùng làm nguồn khi chuyển sang định dạng EPUB.
