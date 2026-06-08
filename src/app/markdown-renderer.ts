@@ -39,13 +39,14 @@ export class MarkdownRenderer {
       }
     });
 
-    // Protect LaTeX math formulas from being modified by marked parser
+    // Protect LaTeX math formulas and MathML tags from being modified by marked parser
     const mathBlocks: string[] = [];
     let mathPlaceholderIndex = 0;
 
-    // Use regex to locate display math ($$ ... $$) and inline math ($ ... $)
+    // Use regex to locate display math ($$ ... $$), inline math ($ ... $), and MathML (<math>...</math>)
     const displayMathRegex = /\$\$([\s\S]+?)\$\$/g;
     const inlineMathRegex = /(?<!\\)\$((?!\s)[^$\n]+?(?<!\\))\$/g;
+    const mathmlRegex = /<math[\s\S]*?<\/math>/gi;
 
     let preprocessed = processedMarkdown;
 
@@ -59,6 +60,14 @@ export class MarkdownRenderer {
 
     // Replace inline math
     preprocessed = preprocessed.replace(inlineMathRegex, (match) => {
+      const placeholder = `<!--MATH_BLOCK_PLACEHOLDER_${mathPlaceholderIndex}-->`;
+      mathBlocks.push(match);
+      mathPlaceholderIndex++;
+      return placeholder;
+    });
+
+    // Replace MathML tags
+    preprocessed = preprocessed.replace(mathmlRegex, (match) => {
       const placeholder = `<!--MATH_BLOCK_PLACEHOLDER_${mathPlaceholderIndex}-->`;
       mathBlocks.push(match);
       mathPlaceholderIndex++;
@@ -114,12 +123,49 @@ export class MarkdownRenderer {
       return `![${key}](${imgFileName})`;
     });
 
+    // Protect LaTeX math formulas and MathML tags from being modified by marked parser
+    const mathBlocks: string[] = [];
+    let mathPlaceholderIndex = 0;
+
+    const displayMathRegex = /\$\$([\s\S]+?)\$\$/g;
+    const inlineMathRegex = /(?<!\\)\$((?!\s)[^$\n]+?(?<!\\))\$/g;
+    const mathmlRegex = /<math[\s\S]*?<\/math>/gi;
+
+    let preprocessed = processedMarkdown;
+
+    preprocessed = preprocessed.replace(displayMathRegex, (match) => {
+      const placeholder = `<!--MATH_BLOCK_PLACEHOLDER_${mathPlaceholderIndex}-->`;
+      mathBlocks.push(match);
+      mathPlaceholderIndex++;
+      return placeholder;
+    });
+
+    preprocessed = preprocessed.replace(inlineMathRegex, (match) => {
+      const placeholder = `<!--MATH_BLOCK_PLACEHOLDER_${mathPlaceholderIndex}-->`;
+      mathBlocks.push(match);
+      mathPlaceholderIndex++;
+      return placeholder;
+    });
+
+    preprocessed = preprocessed.replace(mathmlRegex, (match) => {
+      const placeholder = `<!--MATH_BLOCK_PLACEHOLDER_${mathPlaceholderIndex}-->`;
+      mathBlocks.push(match);
+      mathPlaceholderIndex++;
+      return placeholder;
+    });
+
     let rendered = '';
     try {
-      rendered = marked.parse(processedMarkdown, { breaks: true, async: false }) as string;
+      rendered = marked.parse(preprocessed, { breaks: true, async: false }) as string;
     } catch(e) {
       console.warn("marked error", e);
-      rendered = processedMarkdown;
+      rendered = preprocessed;
+    }
+
+    // Restore protected math blocks
+    for (let i = 0; i < mathPlaceholderIndex; i++) {
+      const placeholder = `<!--MATH_BLOCK_PLACEHOLDER_${i}-->`;
+      rendered = rendered.replace(placeholder, mathBlocks[i]);
     }
     
     // Ensure standard EPUB XHTML compatibility for unclosed valid HTML tags:

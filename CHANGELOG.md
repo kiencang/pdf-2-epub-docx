@@ -5,6 +5,12 @@ Tất cả những thay đổi đáng chú ý của dự án kiencang/Book-silaT
 Định dạng dựa trên [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 và dự án này tuân thủ [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.23]- 2026-06-08
+### Fixed
+- Hợp nhất prompt cho cả EPUB và DOCX;
+- Loại bỏ thử nghiệm model Gemma;
+- Bảo vệ công thức toán dạng thẻ MathML (của EPUB3) tốt hơn, dự phòng lỗi thư viện marked có thể phân tích lầm các thẻ có cấu trúc phức tạp; 
+
 ## [v1.0.22]- 2026-06-08
 ### Fixed
 - Tách riêng chuyển đổi EPUB và DOCX
