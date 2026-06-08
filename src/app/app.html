@@ -4,13 +4,11 @@
   <app-header
     [isScriptLoaded]="isScriptLoaded()"
     [selectedModel]="selectedModel()"
-    [selectedFormat]="selectedFormat()"
     [clientApiKey]="clientApiKey()"
     [historyCount]="historyItems().length"
     [isOptimizing]="isOptimizing()"
     [isParsing]="isParsing()"
     (modelChange)="selectedModel.set($event)"
-    (formatChange)="onFormatTypeChanged($event)"
     (openHistory)="showHistoryModal.set(true)"
     (openApiKey)="openApiKeyModal()">
   </app-header>
@@ -64,7 +62,6 @@
         <app-workspace-preview
           [selectedTab]="selectedTab()"
           [themeStyle]="themeStyle()"
-          [selectedFormat]="selectedFormat()"
           [reflowHtml]="reflowHtml()"
           [reflowSafeHtml]="reflowSafeHtml()"
           [isDevMode]="isDevMode()"

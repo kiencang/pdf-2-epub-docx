@@ -15,7 +15,21 @@ import {
   WidthType,
   VerticalAlign,
   Math as DocxMath,
-  MathRun
+  MathRun,
+  MathFraction,
+  MathSuperScript,
+  MathSubScript,
+  MathSubSuperScript,
+  MathRadical,
+  MathSum,
+  MathIntegral,
+  MathRoundBrackets,
+  MathCurlyBrackets,
+  MathSquareBrackets,
+  MathAngledBrackets,
+  XmlComponent,
+  BuilderElement,
+  createMathBase
 } from 'docx';
 
 function convertDataUrlToUint8Array(dataUrl: string): Uint8Array {
@@ -48,7 +62,7 @@ function parseRecursive(
   bold: boolean,
   italic: boolean,
   code: boolean,
-  math: boolean = false
+  math = false
 ): InlineToken[] {
   if (!s) return [];
 
@@ -75,6 +89,26 @@ function parseRecursive(
     const char = s[i];
 
     const isWhitespace = (ch: string | undefined) => !ch || ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r';
+
+    // 0. MathML blocks: <math ...>...</math>
+    if (s.toLowerCase().startsWith('<math', i)) {
+      const endTag = '</math>';
+      const closerIdx = s.toLowerCase().indexOf(endTag, i);
+      if (closerIdx !== -1) {
+        const fullMathContent = s.substring(i, closerIdx + endTag.length);
+        bestMatch = {
+          tag: '<math>',
+          start: i,
+          end: closerIdx + endTag.length - 1,
+          inner: fullMathContent,
+          nextBold: bold,
+          nextItalic: italic,
+          nextCode: code,
+          nextMath: true
+        };
+        break;
+      }
+    }
 
     // 0. Display Math: $$formula$$
     if (s.startsWith('$$', i)) {
@@ -317,12 +351,313 @@ export function tokenizeInline(text: string): InlineToken[] {
   return parseRecursive(text, false, false, false, false);
 }
 
+function cleanLatexMath(latex: string): string {
+  let result = latex;
+
+  // 1. Text wrapping inside LaTeX: \text{something} -> something
+  result = result.replace(/\\text\s*\{([^}]+)\}/g, '$1');
+
+  // 2. Blackboard bold math sets
+  result = result.replace(/\\mathbb\s*\{\s*N\s*\}/g, 'ℕ');
+  result = result.replace(/\\mathbb\s*\{\s*Z\s*\}/g, 'ℤ');
+  result = result.replace(/\\mathbb\s*\{\s*R\s*\}/g, 'ℝ');
+  result = result.replace(/\\mathbb\s*\{\s*Q\s*\}/g, 'ℚ');
+  result = result.replace(/\\mathbb\s*\{\s*C\s*\}/g, 'ℂ');
+  result = result.replace(/\\mathbb\s+N\b/g, 'ℕ');
+  result = result.replace(/\\mathbb\s+Z\b/g, 'ℤ');
+  result = result.replace(/\\mathbb\s+R\b/g, 'ℝ');
+  result = result.replace(/\\mathbb\s+Q\b/g, 'ℚ');
+  result = result.replace(/\\mathbb\s+C\b/g, 'ℂ');
+
+  // 3. Common mathematical symbols
+  result = result.replace(/\\in\b/g, '∈');
+  result = result.replace(/\\notin\b/g, '∉');
+  result = result.replace(/\\varnothing\b/g, '∅');
+  result = result.replace(/\\emptyset\b/g, '∅');
+  result = result.replace(/\\empty\b/g, '∅');
+  result = result.replace(/\\leq\b/g, '≤');
+  result = result.replace(/\\geq\b/g, '≥');
+  result = result.replace(/\\le\b/g, '≤');
+  result = result.replace(/\\ge\b/g, '≥');
+  result = result.replace(/\\neq\b/g, '≠');
+  result = result.replace(/\\ne\b/g, '≠');
+  result = result.replace(/\\approx\b/g, '≈');
+  result = result.replace(/\\pm\b/g, '±');
+  result = result.replace(/\\times\b/g, '×');
+  result = result.replace(/\\cdot\b/g, '•');
+  result = result.replace(/\\div\b/g, '÷');
+  result = result.replace(/\\infty\b/g, '∞');
+  result = result.replace(/\\alpha\b/g, 'α');
+  result = result.replace(/\\beta\b/g, 'β');
+  result = result.replace(/\\theta\b/g, 'θ');
+  result = result.replace(/\\pi\b/g, 'π');
+
+  // 4. Square roots: \sqrt{x} -> √x or \sqrt{2} -> √2
+  result = result.replace(/\\sqrt\s*\{([^}]+)\}/g, '√$1');
+  result = result.replace(/\\sqrt\s*([0-9a-zA-Z]+)/g, '√$1');
+
+  // 5. Unpack superscript / subscript symbols to unicode superscript / subscript characters
+  const superscriptMap: Record<string, string> = {
+    '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', 
+    '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
+    '+': '⁺', '-': '⁻', '=': '⁼', '(': '⁽', ')': '⁾',
+    'n': 'ⁿ', 'i': 'ⁱ', 'x': 'ˣ', 'y': 'ʸ'
+  };
+  const subscriptMap: Record<string, string> = {
+    '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄', 
+    '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉',
+    '+': '₊', '-': '₋', '=': '₌', '(': '₍', ')': '₎',
+    'n': 'ₙ', 'i': 'ᵢ', 'j': 'ⱼ', 'k': 'ₖ', 'x': 'ₓ', 'y': 'ʸ'
+  };
+
+  // Convert simple superscripts: e.g. x^2 -> x²
+  result = result.replace(/\^\{([^}]+)\}/g, (match, p1) => {
+    return p1.split('').map((char: string) => superscriptMap[char] || '^' + char).join('');
+  });
+  result = result.replace(/\^([0-9a-ixy+-])/g, (match, p1) => {
+    return superscriptMap[p1] || '^' + p1;
+  });
+
+  // Convert simple subscripts: e.g. a_n -> aₙ
+  result = result.replace(/_\{([^}]+)\}/g, (match, p1) => {
+    return p1.split('').map((char: string) => subscriptMap[char] || '_' + char).join('');
+  });
+  result = result.replace(/_([0-9a-ixy+-])/g, (match, p1) => {
+    return subscriptMap[p1] || '_' + p1;
+  });
+
+  // 6. Clean escaped curly braces: e.g., \{ -> {, \} -> }
+  result = result.replace(/\\\{/g, '{');
+  result = result.replace(/\\\}/g, '}');
+
+  // Remove other backslashes
+  result = result.replace(/\\/g, ''); 
+
+  return result.trim();
+}
+
+class MathCustomDelimiters extends XmlComponent {
+  constructor(options: { children: any[], open: string, close: string }) {
+    super("m:d");
+    
+    // Create custom beginning character element
+    const begChr = new BuilderElement({
+      name: "m:begChr",
+      attributes: {
+        character: {
+          key: "m:val",
+          value: options.open
+        }
+      }
+    });
+
+    // Create custom ending character element
+    const endChr = new BuilderElement({
+      name: "m:endChr",
+      attributes: {
+        character: {
+          key: "m:val",
+          value: options.close
+        }
+      }
+    });
+
+    // Create delimiter properties wrapping these characters
+    const dPr = new BuilderElement({
+      name: "m:dPr",
+      children: [begChr, endChr]
+    });
+
+    this.root.push(dPr);
+    this.root.push(createMathBase({ children: options.children }));
+  }
+}
+
+function convertNodeToMathComponent(node: Node): any[] {
+  if (node.nodeType === 3) { // TEXT_NODE
+    const t = node.textContent?.trim() || '';
+    if (t) {
+      return [new MathRun(t)];
+    }
+    return [];
+  }
+
+  if (node.nodeType !== 1) { // Not an ELEMENT_NODE
+    return [];
+  }
+
+  const tagName = (node as Element).tagName?.toLowerCase();
+  
+  const getChildElements = (n: Node): Element[] => 
+    Array.from(n.childNodes).filter(c => c.nodeType === 1) as Element[];
+
+  if (tagName === 'mi' || tagName === 'mn' || tagName === 'mo' || tagName === 'mtext') {
+    const text = node.textContent || '';
+    if (text === '\u2062' || text === '\u2061') { // Skip invisible operators
+      return [];
+    }
+    return [new MathRun(text)];
+  }
+
+  if (tagName === 'mrow') {
+    return Array.from(node.childNodes).flatMap(child => convertNodeToMathComponent(child));
+  }
+
+  if (tagName === 'mfrac') {
+    const children = getChildElements(node);
+    const numComponents = children[0] ? Array.from(children[0].childNodes).flatMap(child => convertNodeToMathComponent(child)) : [];
+    const denComponents = children[1] ? Array.from(children[1].childNodes).flatMap(child => convertNodeToMathComponent(child)) : [];
+    return [new MathFraction({ numerator: numComponents, denominator: denComponents })];
+  }
+
+  if (tagName === 'msub') {
+    const children = getChildElements(node);
+    const baseComponents = children[0] ? Array.from(children[0].childNodes).flatMap(child => convertNodeToMathComponent(child)) : [];
+    const subComponents = children[1] ? Array.from(children[1].childNodes).flatMap(child => convertNodeToMathComponent(child)) : [];
+    return [new MathSubScript({ children: baseComponents, subScript: subComponents })];
+  }
+
+  if (tagName === 'msup') {
+    const children = getChildElements(node);
+    const baseComponents = children[0] ? Array.from(children[0].childNodes).flatMap(child => convertNodeToMathComponent(child)) : [];
+    const supComponents = children[1] ? Array.from(children[1].childNodes).flatMap(child => convertNodeToMathComponent(child)) : [];
+    return [new MathSuperScript({ children: baseComponents, superScript: supComponents })];
+  }
+
+  if (tagName === 'msubsup') {
+    const children = getChildElements(node);
+    const baseComponents = children[0] ? Array.from(children[0].childNodes).flatMap(child => convertNodeToMathComponent(child)) : [];
+    const subComponents = children[1] ? Array.from(children[1].childNodes).flatMap(child => convertNodeToMathComponent(child)) : [];
+    const supComponents = children[2] ? Array.from(children[2].childNodes).flatMap(child => convertNodeToMathComponent(child)) : [];
+    return [new MathSubSuperScript({ children: baseComponents, subScript: subComponents, superScript: supComponents })];
+  }
+
+  if (tagName === 'msqrt') {
+    const innerComponents = Array.from(node.childNodes).flatMap(child => convertNodeToMathComponent(child));
+    return [new MathRadical({ children: innerComponents })];
+  }
+
+  if (tagName === 'mroot') {
+    const children = getChildElements(node);
+    const baseComponents = children[0] ? Array.from(children[0].childNodes).flatMap(child => convertNodeToMathComponent(child)) : [];
+    const degComponents = children[1] ? Array.from(children[1].childNodes).flatMap(child => convertNodeToMathComponent(child)) : [];
+    return [new MathRadical({ children: baseComponents, degree: degComponents })];
+  }
+
+  if (tagName === 'mover' || tagName === 'munder' || tagName === 'munderover') {
+    const children = getChildElements(node);
+    const baseNode = children[0];
+    const underNode = tagName === 'mover' ? undefined : children[1];
+    const overNode = tagName === 'mover' ? children[1] : children[2];
+    
+    const baseText = baseNode?.textContent || '';
+    const isSum = baseText.includes('∑') || baseText.toLowerCase().includes('sum') || baseText.includes('\u2211');
+    const isIntegral = baseText.includes('∫') || baseText.toLowerCase().includes('int') || baseText.includes('\u222b');
+    
+    const baseComponents = baseNode ? Array.from(baseNode.childNodes).flatMap(c => convertNodeToMathComponent(c)) : [];
+    const subComponents = underNode ? Array.from(underNode.childNodes).flatMap(c => convertNodeToMathComponent(c)) : [];
+    const supComponents = overNode ? Array.from(overNode.childNodes).flatMap(c => convertNodeToMathComponent(c)) : [];
+    
+    if (isSum) {
+      return [new MathSum({
+        children: baseComponents,
+        subScript: subComponents.length ? subComponents : undefined,
+        superScript: supComponents.length ? supComponents : undefined
+      })];
+    }
+    
+    if (isIntegral) {
+      return [new MathIntegral({
+        children: baseComponents,
+        subScript: subComponents.length ? subComponents : undefined,
+        superScript: supComponents.length ? supComponents : undefined
+      })];
+    }
+    
+    if (overNode && underNode) {
+      return [new MathSubSuperScript({ children: baseComponents, subScript: subComponents, superScript: supComponents })];
+    } else if (overNode) {
+      return [new MathSuperScript({ children: baseComponents, superScript: supComponents })];
+    } else if (underNode) {
+      return [new MathSubScript({ children: baseComponents, subScript: subComponents })];
+    }
+    return baseComponents;
+  }
+
+  if (tagName === 'mfenced') {
+    const openAttr = (node as Element).getAttribute?.('open') || '(';
+    const closeAttr = (node as Element).getAttribute?.('close') || ')';
+    const innerComponents = Array.from(node.childNodes).flatMap(c => convertNodeToMathComponent(c));
+    
+    if (openAttr === '{' && closeAttr === '}') {
+      return [new MathCurlyBrackets({ children: innerComponents })];
+    } else if (openAttr === '[' && closeAttr === ']') {
+      return [new MathSquareBrackets({ children: innerComponents })];
+    } else if (openAttr === '<' && closeAttr === '>') {
+      return [new MathAngledBrackets({ children: innerComponents })];
+    } else if (openAttr === '(' && closeAttr === ')') {
+      return [new MathRoundBrackets({ children: innerComponents })];
+    } else {
+      // Dùng khối delimiter tùy chỉnh cho các dấu đặc biệt như giá trị tuyệt đối |a| hay chuẩn ||x||, vv.
+      return [new MathCustomDelimiters({ children: innerComponents, open: openAttr, close: closeAttr })];
+    }
+  }
+
+  if (tagName === 'mtable') {
+    const rows = getChildElements(node).filter(n => n.tagName?.toLowerCase() === 'mtr');
+    const allComponents: any[] = [];
+    
+    rows.forEach((rowNode, rIdx) => {
+      const cells = getChildElements(rowNode).filter(n => n.tagName?.toLowerCase() === 'mtd');
+      cells.forEach((cellNode, cIdx) => {
+        const cellComponents = Array.from(cellNode.childNodes).flatMap(c => convertNodeToMathComponent(c));
+        allComponents.push(...cellComponents);
+        if (cIdx < cells.length - 1) {
+          allComponents.push(new MathRun('    '));
+        }
+      });
+      if (rIdx < rows.length - 1) {
+        allComponents.push(new MathRun('\n'));
+      }
+    });
+
+    return allComponents;
+  }
+
+  // Fallback unpacking for custom styled/styling wrappers
+  return Array.from(node.childNodes).flatMap(child => convertNodeToMathComponent(child));
+}
+
+function parseMathML(mathmlString: string): DocxMath {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(mathmlString, 'text/html');
+    const mathNode = doc.querySelector('math');
+    if (!mathNode) {
+      return new DocxMath({ children: [new MathRun(mathmlString)] });
+    }
+    const children = Array.from(mathNode.childNodes).flatMap(node => convertNodeToMathComponent(node));
+    return new DocxMath({ children });
+  } catch (err) {
+    console.error('Lỗi khi parse MathML:', err);
+    return new DocxMath({ children: [new MathRun(mathmlString.replace(/<[^>]+>/g, ''))] });
+  }
+}
+
 function createElementsFromText(text: string, italics?: boolean, color?: string): any[] {
   const tokens = tokenizeInline(text);
   return tokens.map(token => {
     if (token.math) {
-      return new DocxMath({
-        children: [new MathRun(token.text)]
+      if (token.text.trim().startsWith('<math')) {
+        return parseMathML(token.text);
+      }
+      const unicodeMath = cleanLatexMath(token.text);
+      return new TextRun({
+        text: " " + unicodeMath + " ",
+        italics: true,
+        font: "Cambria",
+        size: 22,
+        color: "0F172A", // Dark Slate Color representing premium academic styling
       });
     }
 

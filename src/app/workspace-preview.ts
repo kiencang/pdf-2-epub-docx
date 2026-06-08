@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ChangeDetectionStrategy, Component, input, output, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
@@ -70,41 +71,39 @@ import { SafeHtml } from '@angular/platform-browser';
         <!-- Action Bar: Export EPUB and Word -->
         <div class="flex items-center gap-2 text-xs font-sans">
           @if (reflowHtml()) {
-            @if (selectedFormat() === 'docx') {
-              <!-- Docx Export Wrapper -->
-              <div class="relative group">
-                <button 
-                  (click)="downloadDocx.emit()"
-                  [disabled]="isParsing() || isOptimizing()"
-                  class="py-2.5 px-3 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition shadow shadow-indigo-500/10 cursor-pointer focus:outline-none disabled:cursor-not-allowed shrink-0">
-                  <mat-icon class="text-[18px] w-[18px] h-[18px] leading-[18px] flex items-center justify-center">description</mat-icon>
-                  <span>Tải Docx</span>
-                </button>
-                <!-- Tailwind Tooltip Downwards -->
-                <div class="absolute top-full mt-2.5 left-1/2 -translate-x-1/2 pointer-events-none z-50 bg-slate-900 border border-white/10 text-slate-200 text-[11px] font-sans py-1.5 px-3 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 scale-95 group-hover:scale-100 whitespace-nowrap">
-                  Tải tài liệu Microsoft Word (.docx)
-                  <!-- Tooltip Arrow Pointing Up -->
-                  <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-b-slate-900"></div>
-                </div>
+            <!-- EPUB Export Wrapper -->
+            <div class="relative group">
+              <button 
+                (click)="downloadEpub.emit()"
+                [disabled]="isParsing() || isOptimizing()"
+                class="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition shadow shadow-emerald-500/10 cursor-pointer focus:outline-none disabled:cursor-not-allowed shrink-0">
+                <mat-icon class="text-[18px] w-[18px] h-[18px] leading-[18px] flex items-center justify-center">book</mat-icon>
+                <span>Tải EPUB</span>
+              </button>
+              <!-- Tailwind Tooltip Downwards -->
+              <div class="absolute top-full mt-2.5 left-1/2 -translate-x-1/2 pointer-events-none z-50 bg-slate-900 border border-white/10 text-slate-200 text-[11px] font-sans py-1.5 px-3 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 scale-95 group-hover:scale-100 whitespace-nowrap">
+                Tải sách điện tử định dạng EPUB 3
+                <!-- Tooltip Arrow Pointing Up -->
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-b-slate-900"></div>
               </div>
-            } @else {
-              <!-- EPUB Export Wrapper -->
-              <div class="relative group">
-                <button 
-                  (click)="downloadEpub.emit()"
-                  [disabled]="isParsing() || isOptimizing()"
-                  class="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition shadow shadow-emerald-500/10 cursor-pointer focus:outline-none disabled:cursor-not-allowed shrink-0">
-                  <mat-icon class="text-[18px] w-[18px] h-[18px] leading-[18px] flex items-center justify-center">book</mat-icon>
-                  <span>Tải EPUB</span>
-                </button>
-                <!-- Tailwind Tooltip Downwards -->
-                <div class="absolute top-full mt-2.5 left-1/2 -translate-x-1/2 pointer-events-none z-50 bg-slate-900 border border-white/10 text-slate-200 text-[11px] font-sans py-1.5 px-3 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 scale-95 group-hover:scale-100 whitespace-nowrap">
-                  Tải sách điện tử định dạng EPUB 3
-                  <!-- Tooltip Arrow Pointing Up -->
-                  <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-b-slate-900"></div>
-                </div>
+            </div>
+
+            <!-- Docx Export Wrapper -->
+            <div class="relative group">
+              <button 
+                (click)="downloadDocx.emit()"
+                [disabled]="isParsing() || isOptimizing()"
+                class="py-2.5 px-3 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-1.5 transition shadow shadow-indigo-500/10 cursor-pointer focus:outline-none disabled:cursor-not-allowed shrink-0">
+                <mat-icon class="text-[18px] w-[18px] h-[18px] leading-[18px] flex items-center justify-center">description</mat-icon>
+                <span>Tải Docx</span>
+              </button>
+              <!-- Tailwind Tooltip Downwards -->
+              <div class="absolute top-full mt-2.5 left-1/2 -translate-x-1/2 pointer-events-none z-50 bg-slate-900 border border-white/10 text-slate-200 text-[11px] font-sans py-1.5 px-3 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 scale-95 group-hover:scale-100 whitespace-nowrap">
+                Tải tài liệu Microsoft Word (.docx)
+                <!-- Tooltip Arrow Pointing Up -->
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-b-slate-900"></div>
               </div>
-            }
+            </div>
           }
         </div>
       </div>
@@ -219,7 +218,6 @@ import { SafeHtml } from '@angular/platform-browser';
 export class WorkspacePreview {
   selectedTab = input.required<'reflow' | 'pdf' | 'source' | 'markdown'>();
   themeStyle = input.required<'clean' | 'warm' | 'mono'>();
-  selectedFormat = input.required<'epub' | 'docx'>();
   reflowHtml = input.required<string>();
   reflowSafeHtml = input.required<SafeHtml>();
   isDevMode = input.required<boolean>();
