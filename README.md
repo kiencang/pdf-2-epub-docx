@@ -20,6 +20,7 @@ Dưới đây là danh sách các thư viện quan trọng mà ứng dụng này
 ### 2. Xử lý và Phân tích tài liệu PDF
 *   **[Mozilla PDF.js](https://mozilla.github.io/pdf.js/)** – Phát triển bởi **Mozilla**. Thư viện chạy hoàn toàn trên Client-side, giúp trích xuất hình ảnh trong file PDF.
 *   **[PDF-Lib](https://pdf-lib.js.org/)** – Xử lý tách trang, chia chunk.
+*   **[KaTeX](https://katex.org/)**: Thư viện xử lý và hiển thị công thức toán học do Khan Academy phát triển.Đóng vai trò là engine chuyển đổi các công thức toán học LaTeX (được AI bóc tách từ tài liệu) sang định dạng XML chuẩn `MathML`. Nhờ cấu trúc MathML nguyên bản này, các công thức phức tạp được giữ nguyên định dạng khi xuất sang dạng sách điện tử **EPUB 3** hoặc **Microsoft Word (.docx)**.
 
 ### 3. Đọc/Ghi & Tạo định dạng đầu ra (EPUB, DOCX, ZIP)
 *   **[Docx.js](https://docx.js.org/)** – Phát triển bởi **Dolan Miu**. Thư viện tạo tệp tin Microsoft Word (.docx) chạy trực tiếp trên trình duyệt (Client-side).
