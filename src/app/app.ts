@@ -105,6 +105,11 @@ export class App {
     return null;
   });
 
+  isAllCompleted = computed(() => {
+    const chunks = this.pdfChunks();
+    return chunks.length > 0 && chunks.every(c => c.status === 'completed');
+  });
+
   // Computed fields
   totalPageCount = computed(() => this.pdfPages().length);
   extractedImagesCount = computed(() => {
@@ -959,6 +964,76 @@ export class App {
     }
   }
 
+  async downloadChunkEpubFile() {
+    const chunk = this.activeChunk();
+    if (!chunk || chunk.status !== 'completed' || !chunk.markdownContent) {
+      this.apiError.set('Phần này chưa được xử lý xong để tải xuống.');
+      return;
+    }
+
+    const titleOriginal = this.fileName().replace(/\.pdf$/i, '') || 'tai_lieu_chuyen_doi';
+    const match = chunk.id.match(/\d+/);
+    const pSuffix = match ? `_p${match[0]}` : `_${chunk.id.replace(/\s+/g, '')}`;
+    const title = `${titleOriginal}${pSuffix}`;
+    
+    this.isParsing.set(true);
+    this.parsingStatus.set(`Đang biên dịch tệp tin sách điện tử chuẩn EPUB 3 cho ${chunk.id}...`);
+    
+    try {
+      const blob = await this.pdfProcessor.generateEpub(title, chunk.markdownContent, chunk.pages);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = title + '.epub';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      this.showSuccess(`Tải tệp sách định dạng EPUB (.epub) cho ${chunk.id} thành công!`);
+    } catch (err: any) {
+      this.logError(err);
+      this.apiError.set('Lỗi biên dịch tệp EPUB: ' + err.message + '.');
+    } finally {
+      this.isParsing.set(false);
+      this.parsingStatus.set('');
+    }
+  }
+
+  async downloadChunkDocxFile() {
+    const chunk = this.activeChunk();
+    if (!chunk || chunk.status !== 'completed' || !chunk.markdownContent) {
+      this.apiError.set('Phần này chưa được xử lý xong để tải xuống.');
+      return;
+    }
+
+    const titleOriginal = this.fileName().replace(/\.pdf$/i, '') || 'tai_lieu_chuyen_doi';
+    const match = chunk.id.match(/\d+/);
+    const pSuffix = match ? `_p${match[0]}` : `_${chunk.id.replace(/\s+/g, '')}`;
+    const title = `${titleOriginal}${pSuffix}`;
+    
+    this.isParsing.set(true);
+    this.parsingStatus.set(`Đang tạo tệp tài liệu Word (.docx) chuyên nghiệp cho ${chunk.id}...`);
+    
+    try {
+      const blob = await this.pdfProcessor.generateDocx(title, chunk.markdownContent, chunk.pages);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = title + '.docx';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      this.showSuccess(`Tải tệp tài liệu Word (.docx) cho ${chunk.id} thành công!`);
+    } catch (err: any) {
+      this.logError(err);
+      this.apiError.set('Lỗi biên dịch tệp Word: ' + err.message + '.');
+    } finally {
+      this.isParsing.set(false);
+      this.parsingStatus.set('');
+    }
+  }
+
   /**
    * Download original clean .md Markdown file
    */
@@ -986,6 +1061,79 @@ export class App {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     this.showSuccess('Đã tải tệp Markdown (.md) thành công.');
+  }
+
+  downloadChunkMarkdownFile() {
+    const chunk = this.activeChunk();
+    if (!chunk || chunk.status !== 'completed' || !chunk.markdownContent) {
+      this.apiError.set('Phần này chưa được xử lý xong để tải xuống.');
+      return;
+    }
+
+    const titleOriginal = this.fileName().replace(/\.pdf$/i, '') || 'tai_lieu_chuyen_doi';
+    const match = chunk.id.match(/\d+/);
+    const pSuffix = match ? `_p${match[0]}` : `_${chunk.id.replace(/\s+/g, '')}`;
+    const title = `${titleOriginal}${pSuffix}`;
+    
+    const blob = new Blob([chunk.markdownContent], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = title + '.md';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    this.showSuccess(`Đã tải tệp Markdown (.md) cho ${chunk.id} thành công.`);
+  }
+
+  downloadChunkHtmlFile() {
+    const chunk = this.activeChunk();
+    if (!chunk || chunk.status !== 'completed' || !chunk.reflowHtml) {
+      this.apiError.set('Phần này chưa được xử lý xong để tải xuống.');
+      return;
+    }
+
+    const titleOriginal = this.fileName().replace(/\.pdf$/i, '') || 'tai_lieu_chuyen_doi';
+    const match = chunk.id.match(/\d+/);
+    const pSuffix = match ? `_p${match[0]}` : `_${chunk.id.replace(/\s+/g, '')}`;
+    const title = `${titleOriginal}${pSuffix}`;
+    
+    let fontClass = 'font-sans';
+    if (this.themeStyle() === 'mono') fontClass = 'font-mono';
+
+    const fullHtmlSource = `<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title}</title>
+  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { textBody: '#222' } } }
+    }
+  </script>
+</head>
+<body class="bg-[#eef2f6] min-h-screen text-slate-800 p-8 flex items-center justify-center selection:bg-indigo-300 selection:text-indigo-900">
+  <div class="bg-white max-w-[850px] w-full mx-auto shadow-xl ring-1 ring-slate-900/5 sm:rounded-2xl relative">
+    <div class="p-10 sm:p-14 md:p-16 prose prose-lg !max-w-none prose-slate text-justify !leading-relaxed hover:prose-a:text-indigo-600 prose-img:rounded-xl prose-img:shadow-sm ${fontClass}">
+      ${chunk.reflowHtml}
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const blob = new Blob([fullHtmlSource], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = title + '.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    this.showSuccess(`Đã tải tệp HTML (.html) cho ${chunk.id} thành công.`);
   }
 
   /**
