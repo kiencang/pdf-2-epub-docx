@@ -5,6 +5,11 @@ Tất cả những thay đổi đáng chú ý của dự án kiencang/Book-silaT
 Định dạng dựa trên [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 và dự án này tuân thủ [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.24]- 2026-06-10
+### Fixed
+- Chỉ thị AI sử dụng LaTex làm đầu ra chuẩn cho công thức toán học (tiết kiệm token và có độ chính xác cao hơn);
+- Cài thư viện KaTex để chuyển đổi LaTex thành MathML (chuẩn của EPUB, và làm trung gian để chuyển thành OMML trong DOCX);
+
 ## [v1.0.23]- 2026-06-08
 ### Fixed
 - Hợp nhất prompt cho cả EPUB và DOCX;

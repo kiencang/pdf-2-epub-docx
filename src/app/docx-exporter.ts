@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { PdfPageData } from './pdf-processor';
+import { MarkdownRenderer } from './markdown-renderer';
 import {
   Document,
   Packer,
@@ -730,6 +731,7 @@ export class DocxExporter {
    * styled paragraphs, beautiful bullet points, code highlights, and tables.
    */
   static async generateDocx(title: string, markdownContent: string, pdfPages: PdfPageData[]): Promise<Blob> {
+    const compiledMarkdown = MarkdownRenderer.compileLatexToMathML(markdownContent);
     const allImages: any[] = [];
     pdfPages.forEach(page => {
       if (page.extractedImages) {
@@ -751,7 +753,7 @@ export class DocxExporter {
 
     const children: any[] = [];
 
-    const lines = markdownContent.split('\n');
+    const lines = compiledMarkdown.split('\n');
     let idx = 0;
 
     let inCodeBlock = false;

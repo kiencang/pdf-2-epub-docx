@@ -1,13 +1,86 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { PdfPageData } from './pdf-processor';
 import { marked } from 'marked';
+import katex from 'katex';
 
 export class MarkdownRenderer {
+  /**
+   * Compiles LaTeX formulas ($...$ or $$...$$) into standard MathML tags.
+   */
+  static compileLatexToMathML(markdown: string): string {
+    if (!markdown) return '';
+
+    let compiled = markdown;
+
+    // 1. Process block math: \[ formula \] and $$ formula $$
+    // We parse \[ ... \] first, then $$ ... $$
+    const blockRegexes = [
+      { regex: /\\\[([\s\S]+?)\\\]/g, open: '\\[', close: '\\]' },
+      { regex: /\$\$([\s\S]+?)\$\$/g, open: '$$', close: '$$' } // Match standard $$
+    ];
+
+    for (const item of blockRegexes) {
+      compiled = compiled.replace(item.regex, (match, formula) => {
+        try {
+          const mathml = katex.renderToString(formula.trim(), {
+            displayMode: true,
+            output: 'mathml',
+            throwOnError: true
+          });
+          // Discard wrapping <span class="katex"> to return pure <math> XML structure for native .docx & EPUB
+          const mathMatch = mathml.match(/<math[\s\S]*?<\/math>/i);
+          const cleanMathML = mathMatch ? mathMatch[0] : mathml;
+          
+          // Remove annotation tags to completely prevent double-rendering in simple/dumb EPUB readers
+          return cleanMathML.replace(/<annotation encoding="application\/x-tex">[\s\S]*?<\/annotation>/g, '');
+        } catch (err) {
+          console.warn('KaTeX display math parse failed, falling back to clean display container:', err);
+          // Clean fallback showing the actual formula with its matching delimiters
+          return `<span class="math-fallback-block font-mono text-indigo-400 block my-2 text-center select-all">${item.open} ${formula.trim()} ${item.close}</span>`;
+        }
+      });
+    }
+
+    // 2. Process inline math: \( formula \) and $ formula $
+    // We parse \( ... \) first, then $ ... $
+    const inlineRegexes = [
+      { regex: /\\\(([\s\S]+?)\\\)/g, open: '\\(', close: '\\)' },
+      { regex: /(?<!\\)\$((?!\s)[^$\n]+?(?<!\\))\$/g, open: '$', close: '$' }
+    ];
+
+    for (const item of inlineRegexes) {
+      compiled = compiled.replace(item.regex, (match, formula) => {
+        try {
+          const mathml = katex.renderToString(formula.trim(), {
+            displayMode: false,
+            output: 'mathml',
+            throwOnError: true
+          });
+          // Discard wrapping <span class="katex"> to return pure <math> XML structure for native .docx & EPUB
+          const mathMatch = mathml.match(/<math[\s\S]*?<\/math>/i);
+          const cleanMathML = mathMatch ? mathMatch[0] : mathml;
+          
+          // Remove annotation tags to completely prevent double-rendering in simple/dumb EPUB readers
+          return cleanMathML.replace(/<annotation encoding="application\/x-tex">[\s\S]*?<\/annotation>/g, '');
+        } catch (err) {
+          console.warn('KaTeX inline math parse failed, falling back to clean inline display:', err);
+          // Clean fallback showing the actual formula with its matching delimiters
+          return `<code class="math-fallback-inline text-indigo-400 bg-slate-950/40 px-1 rounded select-all">${item.open}${formula.trim()}${item.close}</code>`;
+        }
+      });
+    }
+
+    return compiled;
+  }
+
   /**
    * Safe, regex-based Markdown-to-HTML parser for preview rendering
    */
   static renderMarkdownToHtml(markdown: string, pdfPages: PdfPageData[]): string {
     if (!markdown) return '';
+
+    // Compile LaTeX math to MathML first
+    const compiledMarkdown = this.compileLatexToMathML(markdown);
 
     const allImages: any[] = [];
     pdfPages.forEach(page => {
@@ -17,7 +90,7 @@ export class MarkdownRenderer {
     });
 
     const imageRegex = /!\[(IMG[-_]CHUNK\d+[-_]\d+|IMG[-_]\d+)\]/gi;
-    const processedMarkdown = markdown.replace(imageRegex, (match, key) => {
+    const processedMarkdown = compiledMarkdown.replace(imageRegex, (match, key) => {
       // Find image by exact labeledKey first (case insensitive)
       let img = allImages.find(i => i.labeledKey === key || i.labeledKey?.toLowerCase() === key.toLowerCase());
       if (!img) {
@@ -43,24 +116,38 @@ export class MarkdownRenderer {
     const mathBlocks: string[] = [];
     let mathPlaceholderIndex = 0;
 
-    // Use regex to locate display math ($$ ... $$), inline math ($ ... $), and MathML (<math>...</math>)
-    const displayMathRegex = /\$\$([\s\S]+?)\$\$/g;
-    const inlineMathRegex = /(?<!\\)\$((?!\s)[^$\n]+?(?<!\\))\$/g;
+    // Use regex to locate display math (\[...\] and $$...$$), inline math (\(...\) and $...$), and MathML (<math>...</math>)
+    const displayMathRegex1 = /\\\[([\s\S]+?)\\\]/g;
+    const displayMathRegex2 = /\$\$([\s\S]+?)\$\$/g;
+    const inlineMathRegex1 = /\\\(([\s\S]+?)\\\)/g;
+    const inlineMathRegex2 = /(?<!\\)\$((?!\s)[^$\n]+?(?<!\\))\$/g;
     const mathmlRegex = /<math[\s\S]*?<\/math>/gi;
 
     let preprocessed = processedMarkdown;
 
     // Replace display math first
-    preprocessed = preprocessed.replace(displayMathRegex, (match) => {
-      const placeholder = `<!--MATH_BLOCK_PLACEHOLDER_${mathPlaceholderIndex}-->`;
+    preprocessed = preprocessed.replace(displayMathRegex1, (match) => {
+      const placeholder = `MATHPLACEHOLDERID${mathPlaceholderIndex}END`;
+      mathBlocks.push(match);
+      mathPlaceholderIndex++;
+      return placeholder;
+    });
+    preprocessed = preprocessed.replace(displayMathRegex2, (match) => {
+      const placeholder = `MATHPLACEHOLDERID${mathPlaceholderIndex}END`;
       mathBlocks.push(match);
       mathPlaceholderIndex++;
       return placeholder;
     });
 
     // Replace inline math
-    preprocessed = preprocessed.replace(inlineMathRegex, (match) => {
-      const placeholder = `<!--MATH_BLOCK_PLACEHOLDER_${mathPlaceholderIndex}-->`;
+    preprocessed = preprocessed.replace(inlineMathRegex1, (match) => {
+      const placeholder = `MATHPLACEHOLDERID${mathPlaceholderIndex}END`;
+      mathBlocks.push(match);
+      mathPlaceholderIndex++;
+      return placeholder;
+    });
+    preprocessed = preprocessed.replace(inlineMathRegex2, (match) => {
+      const placeholder = `MATHPLACEHOLDERID${mathPlaceholderIndex}END`;
       mathBlocks.push(match);
       mathPlaceholderIndex++;
       return placeholder;
@@ -68,7 +155,7 @@ export class MarkdownRenderer {
 
     // Replace MathML tags
     preprocessed = preprocessed.replace(mathmlRegex, (match) => {
-      const placeholder = `<!--MATH_BLOCK_PLACEHOLDER_${mathPlaceholderIndex}-->`;
+      const placeholder = `MATHPLACEHOLDERID${mathPlaceholderIndex}END`;
       mathBlocks.push(match);
       mathPlaceholderIndex++;
       return placeholder;
@@ -84,8 +171,9 @@ export class MarkdownRenderer {
 
     // Restore protected math blocks
     for (let i = 0; i < mathPlaceholderIndex; i++) {
-      const placeholder = `<!--MATH_BLOCK_PLACEHOLDER_${i}-->`;
-      html = html.replace(placeholder, mathBlocks[i]);
+      const placeholder = `MATHPLACEHOLDERID${i}END`;
+      // Use split/join to replace all occurrences globally, in case marked duplicate or we need global replace
+      html = html.split(placeholder).join(mathBlocks[i]);
     }
 
     let rendered = html;
@@ -116,8 +204,11 @@ export class MarkdownRenderer {
   static markdownToXhtml(markdown: string): string {
     if (!markdown) return '';
 
+    // Compile LaTeX math to MathML first
+    const compiledMarkdown = this.compileLatexToMathML(markdown);
+
     const imageRegex = /!\[(IMG[-_]CHUNK\d+[-_]\d+|IMG[-_]\d+)\]/gi;
-    const processedMarkdown = markdown.replace(imageRegex, (match, key) => {
+    const processedMarkdown = compiledMarkdown.replace(imageRegex, (match, key) => {
       const safeKey = key.replace(/[^a-zA-Z0-9-_]/g, '');
       const imgFileName = `images/${safeKey}.png`;
       return `![${key}](${imgFileName})`;
@@ -127,28 +218,42 @@ export class MarkdownRenderer {
     const mathBlocks: string[] = [];
     let mathPlaceholderIndex = 0;
 
-    const displayMathRegex = /\$\$([\s\S]+?)\$\$/g;
-    const inlineMathRegex = /(?<!\\)\$((?!\s)[^$\n]+?(?<!\\))\$/g;
+    const displayMathRegex1 = /\\\[([\s\S]+?)\\\]/g;
+    const displayMathRegex2 = /\$\$([\s\S]+?)\$\$/g;
+    const inlineMathRegex1 = /\\\(([\s\S]+?)\\\)/g;
+    const inlineMathRegex2 = /(?<!\\)\$((?!\s)[^$\n]+?(?<!\\))\$/g;
     const mathmlRegex = /<math[\s\S]*?<\/math>/gi;
 
     let preprocessed = processedMarkdown;
 
-    preprocessed = preprocessed.replace(displayMathRegex, (match) => {
-      const placeholder = `<!--MATH_BLOCK_PLACEHOLDER_${mathPlaceholderIndex}-->`;
+    preprocessed = preprocessed.replace(displayMathRegex1, (match) => {
+      const placeholder = `MATHPLACEHOLDERID${mathPlaceholderIndex}END`;
+      mathBlocks.push(match);
+      mathPlaceholderIndex++;
+      return placeholder;
+    });
+    preprocessed = preprocessed.replace(displayMathRegex2, (match) => {
+      const placeholder = `MATHPLACEHOLDERID${mathPlaceholderIndex}END`;
       mathBlocks.push(match);
       mathPlaceholderIndex++;
       return placeholder;
     });
 
-    preprocessed = preprocessed.replace(inlineMathRegex, (match) => {
-      const placeholder = `<!--MATH_BLOCK_PLACEHOLDER_${mathPlaceholderIndex}-->`;
+    preprocessed = preprocessed.replace(inlineMathRegex1, (match) => {
+      const placeholder = `MATHPLACEHOLDERID${mathPlaceholderIndex}END`;
+      mathBlocks.push(match);
+      mathPlaceholderIndex++;
+      return placeholder;
+    });
+    preprocessed = preprocessed.replace(inlineMathRegex2, (match) => {
+      const placeholder = `MATHPLACEHOLDERID${mathPlaceholderIndex}END`;
       mathBlocks.push(match);
       mathPlaceholderIndex++;
       return placeholder;
     });
 
     preprocessed = preprocessed.replace(mathmlRegex, (match) => {
-      const placeholder = `<!--MATH_BLOCK_PLACEHOLDER_${mathPlaceholderIndex}-->`;
+      const placeholder = `MATHPLACEHOLDERID${mathPlaceholderIndex}END`;
       mathBlocks.push(match);
       mathPlaceholderIndex++;
       return placeholder;
@@ -164,8 +269,8 @@ export class MarkdownRenderer {
 
     // Restore protected math blocks
     for (let i = 0; i < mathPlaceholderIndex; i++) {
-      const placeholder = `<!--MATH_BLOCK_PLACEHOLDER_${i}-->`;
-      rendered = rendered.replace(placeholder, mathBlocks[i]);
+      const placeholder = `MATHPLACEHOLDERID${i}END`;
+      rendered = rendered.split(placeholder).join(mathBlocks[i]);
     }
     
     // Ensure standard EPUB XHTML compatibility for unclosed valid HTML tags:

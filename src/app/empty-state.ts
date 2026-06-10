@@ -21,7 +21,7 @@ import { MatIconModule } from '@angular/material/icon';
         (drop)="onFileDropped($event)"
         (click)="!isParsing() && fileInput.click()"
         (keydown.enter)="!isParsing() && fileInput.click()"
-        class="w-full max-w-lg bg-slate-950 border-2 border-dashed border-white/10 rounded-3xl p-10 md:p-14 transition-all duration-300 shadow-2xl flex flex-col items-center group select-none"
+        class="w-full max-w-lg bg-slate-950 border-2 border-dashed border-white/20 rounded-3xl p-10 md:p-14 transition-all duration-300 shadow-2xl flex flex-col items-center group select-none"
         [class.hover:border-indigo-500/50]="!isParsing()"
         [class.cursor-pointer]="!isParsing()"
         [class.cursor-not-allowed]="isParsing()">
