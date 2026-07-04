@@ -15,7 +15,7 @@ import { CommonModule } from '@angular/common';
 
         <!-- Center side: Links -->
         <div class="flex flex-wrap justify-center items-center gap-2.5 sm:gap-4 shrink-0 text-slate-400 font-normal">
-          <span class="text-slate-400">v1.0.25</span>
+          <span class="text-slate-400">v1.0.26</span>
           <span class="text-slate-800 font-light text-xs select-none">•</span>
           <a href="https://github.com/kiencang/pdf-2-epub-docx" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors duration-200 cursor-pointer">GitHub</a>
           <span class="text-slate-800 font-light text-xs select-none">•</span>
