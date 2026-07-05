@@ -1,9 +1,11 @@
 # pdf-2-epub-docx
 Công cụ này trích xuất ảnh trong file PDF, sau đó dùng AI để chuyển định dạng sang markdown và lắp ghép ảnh đúng vị trí, kết hợp với trích xuất text trong ảnh sơ đồ biểu đồ để đầy đủ thông tin hơn. Cuối cùng chuyển đổi thành định dạng EPUB tiêu chuẩn để làm đầu vào dịch thuật ưa thích cho AI. Bạn có thể sử dụng công cụ dịch EPUB này: https://silabook.wpsila.com/
 
-Công cụ hoạt động tốt hơn với model Flash, với model Lite, cũng hoạt động ổn trong đa số trường hợp.
+Công cụ hoạt động tốt hơn với model Flash; với model Lite, cũng hoạt động ổn trong đa số trường hợp.
 
 Link app để Remix về trên AI Studio, nhằm tận dụng API Key miễn phí: https://aistudio.google.com/apps/9a11586a-e712-4c10-a1b6-751ab78fc10b?showAssistant=true&showCode=true
+
+Sản phẩm thay thế: Hiện có một công cụ miễn phí tiện dùng khác có chất lượng rất cao để chuyển đổi PDF thành markdown, đó là https://aistudio.baidu.com/paddleocr. Ưu điểm của nó là ngoài chuyển đổi file PDF tiêu chuẩn, nó còn có thể chuyển đổi cả file PDF dạng scan. Ngoài ra tốc độ chuyển đổi cũng khá cao. Mọi người có thể tham khảo thêm nếu cần.
 
 ## Tuyên bố từ chối trách nhiệm
 Công cụ này chỉ nên sử dụng cho mục đích nghiên cứu và học tập cá nhân.
